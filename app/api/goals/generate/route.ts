@@ -28,23 +28,24 @@ export async function POST(request: NextRequest) {
 
 Отвечай строго в формате JSON массива без дополнительного текста.`;
 
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
+  const response = await fetch(process.env.NEXT_PUBLIC_OPENROUTER_API_URL!, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "x-api-key": process.env.ANTHROPIC_API_KEY!,
-      "anthropic-version": "2023-06-01",
+      Authorization: `Bearer ${process.env.OPENROUTER_API_KEY_1!}`,
+      "HTTP-Referer":
+        process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+      "X-Title": "Ability Rehab Platform",
     },
     body: JSON.stringify({
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: 1000,
+      model: "openrouter/free",
       messages: [{ role: "user", content: prompt }],
+      max_tokens: 1000,
     }),
   });
 
   const data = await response.json();
-  console.log("Claude response:", JSON.stringify(data));
-  const text = data.content[0].text;
+  const text = data.choices[0].message.content;
   const clean = text.replace(/```json|```/g, "").trim();
   const goals = JSON.parse(clean);
 

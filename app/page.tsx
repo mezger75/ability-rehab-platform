@@ -266,6 +266,16 @@ interface Goal {
   timeBound: string;
 }
 
+interface GeneratedGoal {
+  text: string;
+  specific: string;
+  measurable: string;
+  achievable: string;
+  relevant: string;
+  timeBound: string;
+  domain: string;
+}
+
 interface Submission {
   name: string;
   answers: Record<string, number>;
@@ -1009,87 +1019,70 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
     setMsgs(newMsgs);
     setLoading(true);
 
-    const systemPrompt = `Ты — опытный врач-реабилитолог, ИИ-ассистент. Помогаешь составлять SMART-цели реабилитации.
-
-Пациент: ${patient.name}, ${patient.age} лет, диагноз: ${patient.diagnosis}, неделя реабилитации: ${patient.weeks}.
-Текущие индексы WHODAS 2.0 (шкала 1–5, где 5 = полная неспособность):
-Когниция: 2.3 · Мобильность: 2.5 · Самообслуживание: 2.1 · Взаимодействие: 2.0 · Жизнедеятельность: 2.4 · Участие: 2.5
-
-При формулировании SMART-цели используй СТРОГО этот формат (каждый тег с новой строки):
-SMART_GOAL: [формулировка цели]
-SPECIFIC: [конкретность]
-MEASURABLE: [измеримость]
-ACHIEVABLE: [достижимость]
-RELEVANT: [значимость для пациента]
-TIME_BOUND: [срок]
-DOMAIN: [один из: Мобильность / Когниция / Самообслуживание / Взаимодействие / Жизнедеятельность / Участие]
-
-Отвечай по-русски, профессионально и лаконично. Если пользователь просто общается — общайся, без шаблона.`;
-
     try {
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
+      const res = await fetch("/api/goals/generate", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-api-key": process.env.NEXT_PUBLIC_ANTHROPIC_API_KEY || "",
-          "anthropic-version": "2023-06-01",
         },
         body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 1000,
-          system: systemPrompt,
-          messages: newMsgs.map((m) => ({ role: m.role, content: m.content })),
+          patient: {
+            name: patient.name,
+            age: patient.age,
+            diagnosis: patient.diagnosis,
+            vas_rest: 2,
+            vas_movement: 6,
+            grip_strength_right: 25,
+            grip_strength_left: 28,
+            quick_dash_score: 35,
+            recovery_phase: `Неделя ${patient.weeks}`,
+          },
         }),
       });
+
       const data = await res.json();
-      const reply = data.content?.[0]?.text || "Ошибка ответа.";
-      setMsgs((prev) => [
-        ...prev,
-        { role: "assistant" as const, content: reply },
-      ]);
+      const generatedGoals: GeneratedGoal[] = data.goals || [];
 
-      if (reply.includes("SMART_GOAL:")) {
-        const lines = reply.split("\n");
-        const g: Partial<Goal> = {
-          id: Date.now(),
-          progress: 0,
-          color: GOAL_COLORS[goals.length % GOAL_COLORS.length],
-        };
-        lines.forEach((l: string) => {
-          const kv = (prefix: string) => {
-            if (l.trim().startsWith(prefix))
-              return l.replace(prefix, "").trim();
-            return null;
+      if (generatedGoals.length > 0) {
+        const reply = `Сформулированы SMART-цели:\n\n${generatedGoals
+          .map(
+            (g, i) =>
+              `${i + 1}. ${g.text}\n   Домен: ${g.domain}\n   Срок: ${g.timeBound}`
+          )
+          .join("\n\n")}`;
+
+        setMsgs((prev) => [
+          ...prev,
+          { role: "assistant" as const, content: reply },
+        ]);
+
+        // Add goals to the goals list
+        generatedGoals.forEach((g) => {
+          const newGoal: Goal = {
+            id: Date.now() + Math.random(),
+            domain: g.domain || "Общая",
+            color: GOAL_COLORS[goals.length % GOAL_COLORS.length],
+            progress: 0,
+            text: g.text || "",
+            specific: g.specific || "",
+            measurable: g.measurable || "",
+            achievable: g.achievable || "",
+            relevant: g.relevant || "",
+            timeBound: g.timeBound || "",
           };
-          const smartGoal = kv("SMART_GOAL:");
-          const specific = kv("SPECIFIC:");
-          const measurable = kv("MEASURABLE:");
-          const achievable = kv("ACHIEVABLE:");
-          const relevant = kv("RELEVANT:");
-          const timeBound = kv("TIME_BOUND:");
-          const domain = kv("DOMAIN:");
-
-          if (smartGoal) g.text = smartGoal;
-          if (specific) g.specific = specific;
-          if (measurable) g.measurable = measurable;
-          if (achievable) g.achievable = achievable;
-          if (relevant) g.relevant = relevant;
-          if (timeBound) g.timeBound = timeBound;
-          if (domain) g.domain = domain;
+          setGoals((prev) => [...prev, newGoal]);
         });
-        if (
-          g.text &&
-          g.specific &&
-          g.measurable &&
-          g.achievable &&
-          g.relevant &&
-          g.timeBound &&
-          g.domain
-        ) {
-          setGoals((prev) => [...prev, g as Goal]);
-        }
+      } else {
+        setMsgs((prev) => [
+          ...prev,
+          {
+            role: "assistant" as const,
+            content: "Не удалось сформулировать цели. Попробуйте еще раз.",
+          },
+        ]);
       }
-    } catch {
+    } catch (error) {
+      console.error("Error calling goals API:", error);
       setMsgs((prev) => [
         ...prev,
         { role: "assistant" as const, content: "Ошибка соединения с API." },
