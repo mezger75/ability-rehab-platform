@@ -104,7 +104,7 @@ const GOAL_COLORS = ["#3b82f6","#8b5cf6","#f59e0b","#10b981","#f97316","#ec4899"
 
 // ─── Landing Page ─────────────────────────────────────────────────────────────
 
-function LandingPage({ setView }) {
+function LandingPage({ setView }: { setView: (view: string) => void }) {
   return (
     <div style={{ minHeight:"100vh", background:"linear-gradient(135deg, #eff6ff 0%, #eef2ff 100%)", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"24px" }}>
       <div style={{ width:64, height:64, background:"#2563eb", borderRadius:16, display:"flex", alignItems:"center", justifyContent:"center", marginBottom:20 }}>
