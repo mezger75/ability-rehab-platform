@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
-  const body = await request.json()
-  const { patient } = body
+  const body = await request.json();
+  const { patient } = body;
 
   const prompt = `Ты — ИИ-ассистент врача-реабилитолога. На основе данных пациента сформулируй 2-3 персонализированные SMART-цели реабилитации.
 
@@ -26,23 +26,27 @@ export async function POST(request: NextRequest) {
 - timeBound: срок
 - domain: область (Мобильность / Самообслуживание / Боль / Сила)
 
-Отвечай строго в формате JSON массива без дополнительного текста.`
+Отвечай строго в формате JSON массива без дополнительного текста.`;
 
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }]
-      })
-    }
-  )
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": process.env.ANTHROPIC_API_KEY!,
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify({
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 1000,
+      messages: [{ role: "user", content: prompt }],
+    }),
+  });
 
-  const data = await response.json()
-  const text = data.candidates[0].content.parts[0].text
-  const clean = text.replace(/```json|```/g, '').trim()
-  const goals = JSON.parse(clean)
+  const data = await response.json();
+  console.log("Claude response:", JSON.stringify(data));
+  const text = data.content[0].text;
+  const clean = text.replace(/```json|```/g, "").trim();
+  const goals = JSON.parse(clean);
 
-  return NextResponse.json({ goals })
+  return NextResponse.json({ goals });
 }
