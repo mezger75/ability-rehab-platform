@@ -2,136 +2,160 @@
 
 **Feature Branch**: `001-ai-rehab-platform-mvp`  
 **Created**: 2026-04-14  
-**Status**: Draft  
+**Updated**: 2026-04-15  
+**Status**: In Development  
 **Input**: User description: "AI rehabilitation platform: the patient completes a questionnaire to collect data on their condition and progress, while the clinician works in a dashboard where, based on this data, AI helps formulate personalized, measurable rehabilitation goals and predict the patient's recovery trajectory."
+
+## MVP Scope Changes (2026-04-15)
+
+- **Authentication**: Removed from MVP - single-page application with role selection (Patient/Clinician)
+- **Questionnaire**: Using WHO Disability Assessment Schedule (WHODAS 2.0) 12-item version
+- **Charts**: Using Recharts library for data visualization in clinician dashboard
+- **Language**: Russian only
+- **Storage**: Mock data in-memory for MVP (no backend/database)
+- **AI Integration**: Any free LLM API (Claude, OpenAI, Gemini, etc.) for SMART goal generation
 
 ## User Scenarios & Testing _(mandatory)_
 
-### User Story 1 - Patient Completes Assessment Questionnaire (Priority: P1)
+### User Story 1 - Patient Completes WHODAS 2.0 Assessment (Priority: P1)
 
-A patient opens the platform in a mobile browser and completes a structured questionnaire about their current condition, symptoms, functional limitations, and current recovery stage. The questionnaire is designed for smartphone use, shown in Russian only, and adapts based on the selected rehabilitation category and subtype so the system can collect standardized data for clinician review.
+A patient opens the platform and completes the WHO Disability Assessment Schedule (WHODAS 2.0) 12-item questionnaire. The questionnaire assesses functional limitations across 6 domains: Cognition, Mobility, Self-care, Getting along, Life activities, and Participation. Each question uses a 5-point scale (None, Mild, Moderate, Severe, Extreme/Cannot do). The interface is mobile-optimized and presented in Russian.
 
-**Why this priority**: This is the foundation of the MVP - without structured patient data collection, the clinician dashboard and AI goal generation cannot function. It is the first step in the core product flow and converts unstructured patient complaints into usable clinical input.
+**Why this priority**: This is the foundation of the MVP - the WHODAS 2.0 provides standardized, validated assessment data that can be used for goal setting and progress tracking. It's a WHO-approved instrument widely used in rehabilitation.
 
-**Independent Test**: Can be fully tested by having a patient complete onboarding, accept the disclaimer, fill in the questionnaire on a mobile device, and verify that all responses are validated and stored correctly.
+**Independent Test**: Can be fully tested by completing the 12-question assessment on a mobile device and verifying that responses are captured and scored correctly across all 6 domains.
 
 **Acceptance Scenarios**:
 
-1. **Given** a patient is using the platform for the first time, **When** they begin onboarding, **Then** they must first review and accept the privacy policy and medical disclaimer
-2. **Given** a patient is completing the questionnaire on mobile, **When** they select a rehabilitation category, subtype, and recovery stage, **Then** they see only questions relevant to that case
-3. **Given** a patient provides invalid or incomplete responses, **When** they try to continue, **Then** they receive clear validation messages and cannot proceed until required fields are completed
-4. **Given** a patient completes the questionnaire, **When** they submit their responses, **Then** the data is saved and made available for clinician review
+1. **Given** a patient selects "I am a patient" on the landing page, **When** they view the questionnaire intro, **Then** they see information about WHODAS 2.0 and the 6 domains being assessed
+2. **Given** a patient is completing the questionnaire, **When** they answer each question, **Then** they select from a 5-point scale with clear Russian labels
+3. **Given** a patient completes all 12 questions, **When** they submit, **Then** they see their results with domain scores and an overall disability index
+4. **Given** a patient views their results, **When** the page displays scores, **Then** each domain shows a score from 1-5 with visual indicators (colors, progress bars)
 
 ---
 
 ### User Story 2 - Clinician Reviews Patient Data Dashboard (Priority: P1)
 
-A clinician logs into a desktop dashboard and reviews patient questionnaire submissions in a structured format. The dashboard displays a list of patients, recent submissions, and patient-specific assessment details including symptoms, functional limitations, and a concise AI-generated summary to help the clinician quickly understand the case.
+A clinician accesses a desktop dashboard showing mock patient data including WHODAS 2.0 scores over time, progress charts, and current rehabilitation goals. The dashboard uses Recharts for data visualization including radar charts (domain profiles), area charts (progress over time), and bar charts (patient comparisons).
 
-**Why this priority**: Clinicians need an efficient way to review collected patient data. Without the dashboard, the questionnaire responses have limited value. Together, patient data collection and clinician review form the minimum viable workflow of the product.
+**Why this priority**: Clinicians need visual tools to quickly understand patient progress and functional limitations. Charts make it easier to identify trends and areas needing focus.
 
-**Independent Test**: Can be fully tested by loading the system with completed questionnaire responses and verifying that clinicians can access the dashboard, open a patient profile, and review the latest assessment data.
+**Independent Test**: Can be fully tested by accessing the clinician dashboard and verifying that all charts render correctly with mock data and are interactive.
 
 **Acceptance Scenarios**:
 
-1. **Given** a clinician has assigned patients, **When** they access the dashboard, **Then** they see a list of patients with summary indicators such as latest submission date and review status
-2. **Given** a clinician selects a specific patient, **When** they open the patient detail view, **Then** they see the latest questionnaire responses and a structured summary of the patient’s reported limitations
-3. **Given** a patient has submitted a new questionnaire, **When** the clinician views the dashboard, **Then** that patient is marked as having new data requiring review
-4. **Given** a clinician is reviewing patient data, **When** they add notes, **Then** those notes are saved to the patient record
+1. **Given** a clinician selects "I am a clinician" on the landing page, **When** they access the dashboard, **Then** they see a list of mock patients with summary statistics
+2. **Given** a clinician selects a patient, **When** they view the Overview tab, **Then** they see a radar chart showing current vs. baseline WHODAS 2.0 domain scores
+3. **Given** a clinician views the Progress tab, **When** charts load, **Then** they see area charts showing score trends over weeks and bar charts comparing patients
+4. **Given** a clinician reviews patient data, **When** they switch between tabs (Overview, Progress, Goals, AI Chat), **Then** navigation is smooth and data persists
 
 ---
 
-### User Story 3 - AI-Generated Personalized Rehabilitation Goals (Priority: P1)
+### User Story 3 - AI-Generated SMART Rehabilitation Goals (Priority: P1)
 
-Based on the patient’s questionnaire data, the AI suggests personalized, measurable rehabilitation goals for the clinician. Goals are SMART (Specific, Measurable, Achievable, Relevant, Time-bound) and tailored to the individual's capabilities and recovery phase. The clinician reviews these suggestions in the dashboard, can edit or reject them, and approves final goals that are then visible to the patient in a simple understandable format.
+Based on mock patient WHODAS 2.0 data, the clinician uses an AI chat interface to generate personalized SMART rehabilitation goals. The AI (any free LLM API) analyzes the patient's functional limitations and suggests specific, measurable, achievable, relevant, and time-bound goals. Goals are automatically added to the Goals tab where clinicians can track progress.
 
-**Why this priority**: This is the main intelligence layer of the MVP and the core product differentiator. The platform’s value is not only in collecting data, but in helping clinicians turn structured patient input into actionable SMART goals more quickly and consistently.
+**Why this priority**: This is the core AI feature that differentiates the platform. It helps clinicians create evidence-based, personalized goals more efficiently.
 
-**Independent Test**: Can be fully tested by feeding completed patient assessments into the AI goal generation flow and verifying that the system produces editable goal suggestions that clinicians can approve.
+**Independent Test**: Can be fully tested by using the AI chat to request goal generation and verifying that goals follow SMART format and are added to the patient's goal list.
 
 **Acceptance Scenarios**:
 
-1. **Given** a patient has completed an assessment questionnaire, **When** the clinician requests AI goal suggestions, **Then** the system generates 2-3 personalized measurable rehabilitation goals
-2. **Given** the AI has generated goal suggestions, **When** the clinician reviews them, **Then** they can accept, modify, or reject each goal before approval
-3. **Given** goals have been approved by the clinician, **When** the patient logs in, **Then** they can view their current rehabilitation goals in Russian
-4. **Given** the AI cannot generate a meaningful goal due to insufficient or inconsistent data, **When** the clinician requests suggestions, **Then** the system provides a fallback manual goal creation flow
+1. **Given** a clinician is viewing a patient's data, **When** they open the AI Chat tab, **Then** they see a chat interface with suggested prompts for goal generation
+2. **Given** a clinician requests a SMART goal for a specific domain, **When** the AI responds, **Then** the goal includes all SMART components (Specific, Measurable, Achievable, Relevant, Time-bound, Domain)
+3. **Given** the AI generates a goal, **When** the response is parsed, **Then** the goal is automatically added to the Goals tab with a progress tracker
+4. **Given** a clinician views the Goals tab, **When** they see active goals, **Then** they can adjust progress sliders and view SMART criteria for each goal
 
 ---
 
 ### Edge Cases
 
-- What happens when a patient starts a questionnaire but does not complete it? (Save draft or allow resume later)
-- What if the patient enters symptoms that may indicate a red flag? (Show warning and advise consultation with a clinician or urgent care)
-- What if the AI cannot generate suitable goals from the available data? (Fallback to manual clinician input)
-- What if a clinician disagrees with the AI suggestion? (Clinician can edit or fully replace the goal)
-- What happens if the patient accesses the platform from desktop instead of mobile? (Allow access, but optimize the experience primarily for mobile web)
+- What happens when a patient doesn't complete all questions? (Progress bar shows completion, can navigate back)
+- What if the AI chat fails to connect? (Show error message: "Connection error with API")
+- What if the AI response doesn't follow the expected format? (Goal is not added, clinician sees the raw response)
+- What happens on desktop vs mobile? (Patient view is mobile-optimized but works on desktop; clinician view is desktop-optimized)
+- What if a patient has very low scores (severe disability)? (System shows appropriate color coding and recommendations)
 
 ## Clarifications
 
 ### Session 2026-04-14
 
-- Q: Patient authentication method? → A: Email + OTP (one-time password) - passwordless authentication using email verification codes
-- Q: AI model for goal generation? → A: To be decided during implementation; must have free tier for MVP
-- Q: Database for patient data storage? → A: Supabase (PostgreSQL)
-- Q: Clinician access control and patient assignment? → A: Admin creates clinician accounts, patients select their clinician during registration
-- Q: Questionnaire content source? → A: Start with fixed generic questionnaire, expand categories later
+- Q: Patient authentication method? → A: ~~Email + OTP~~ **REMOVED FROM MVP** - No authentication, role selection only
+- Q: AI model for goal generation? → A: **Any free LLM API** (Claude, OpenAI, Gemini, etc.) - configurable via environment variable
+- Q: Database for patient data storage? → A: ~~Supabase~~ **REMOVED FROM MVP** - Mock data in-memory only
+- Q: Clinician access control and patient assignment? → A: **REMOVED FROM MVP** - Mock patient list with hardcoded data
+- Q: Questionnaire content source? → A: **WHODAS 2.0 (12-item version)** - WHO standardized disability assessment
+
+### Session 2026-04-15
+
+- Q: Chart library for clinician dashboard? → A: **Recharts** - React charting library
+- Q: MVP data persistence? → A: **In-memory only** - No backend, all data resets on page refresh
+- Q: Styling approach? → A: **Inline styles** for MVP speed, no Tailwind/shadcn in current implementation
+- Q: Form validation? → A: **Client-side only** - Basic validation, no schema libraries in MVP
+- Q: AI provider flexibility? → A: **Any free LLM** - Should work with Claude API, OpenAI, Gemini, or any compatible API
 
 ## Requirements _(mandatory)_
 
 ### Functional Requirements
 
-- **FR-001**: System MUST provide role-based access with separate interfaces for patients and clinicians
+- **FR-001**: System MUST provide role selection with separate interfaces for patients and clinicians (no authentication)
 - **FR-002**: System MUST support Russian language only in MVP
-- **FR-003**: System MUST present a privacy notice and medical disclaimer before patient onboarding begins
-- **FR-004**: System MUST allow patients to register and authenticate using email + OTP (one-time password sent via email)
-- **FR-005**: System MUST allow patients to select their assigned clinician during registration from a list of available clinicians
+- **FR-003**: System MUST implement WHODAS 2.0 12-item questionnaire with 5-point scale responses
+- **FR-004**: System MUST assess 6 functional domains: Cognition (2 questions), Mobility (2), Self-care (2), Getting along (2), Life activities (2), Participation (2)
+- **FR-005**: System MUST calculate domain scores and overall disability index from questionnaire responses
 - **FR-006**: System MUST provide a patient questionnaire flow optimized for mobile browsers
-- **FR-006**: System MUST present questionnaire questions tailored to the selected rehabilitation category, subtype, and recovery stage
-- **FR-007**: System MUST validate questionnaire responses in real time and prevent submission of incomplete required data
-- **FR-008**: System MUST store questionnaire responses with timestamps and associate them with the correct patient record
+- **FR-007**: System MUST validate questionnaire responses and show progress (question X of 12)
+- **FR-008**: System MUST display questionnaire results with domain scores, overall index, and visual indicators
 - **FR-009**: System MUST provide a clinician dashboard optimized for desktop use
-- **FR-010**: System MUST display all assigned patients with summary status indicators in the clinician dashboard
-- **FR-011**: System MUST allow clinicians to open a detailed patient view with the latest questionnaire data
-- **FR-012**: System MUST generate a concise AI summary of the patient’s reported condition and limitations
-- **FR-013**: System MUST generate AI-powered rehabilitation goal suggestions based on patient questionnaire data
-- **FR-014**: System MUST allow clinicians to review, edit, approve, or reject AI-generated goals
-- **FR-015**: System MUST allow clinicians to manually create rehabilitation goals when needed
-- **FR-016**: System MUST display approved rehabilitation goals to patients in a simple, understandable format
-- **FR-017**: System MUST include basic safety handling for red-flag symptoms by warning the patient and advising medical consultation
-- **FR-018**: System MUST maintain an audit trail of clinician actions such as goal approval, edits, and notes
+- **FR-010**: System MUST display mock patient list with summary statistics (name, diagnosis, age, weeks in rehab)
+- **FR-011**: System MUST use Recharts library for all data visualizations
+- **FR-012**: System MUST display radar chart showing current vs. baseline WHODAS 2.0 domain profiles
+- **FR-013**: System MUST display area chart showing progress trends over weeks for multiple domains
+- **FR-014**: System MUST display bar charts for patient comparisons and goal progress
+- **FR-015**: System MUST integrate with any free LLM API (Claude, OpenAI, Gemini, etc.) for AI-powered SMART goal generation
+- **FR-016**: System MUST parse AI responses to extract SMART goal components (Specific, Measurable, Achievable, Relevant, Time-bound, Domain)
+- **FR-017**: System MUST allow clinicians to interact with AI via chat interface with suggested prompts
+- **FR-018**: System MUST display approved rehabilitation goals with progress sliders (0-100%)
+- **FR-019**: System MUST show SMART criteria breakdown for each goal
+- **FR-020**: System MUST provide tab navigation in clinician dashboard (Overview, Progress, Goals, AI Chat)
+- **FR-021**: System MUST handle AI API failures gracefully with error messages
+- **FR-022**: System MUST allow switching between different LLM providers via configuration
 
 ### Key Entities
 
-- **Patient**: Individual receiving rehabilitation support; has profile data, selected rehabilitation context, questionnaire responses, and approved rehabilitation goals
-- **Clinician**: Healthcare professional reviewing patient assessments; has assigned patients, notes, and approved goal history
-- **Questionnaire**: Structured assessment flow tailored to a rehabilitation category, subtype, and recovery stage; contains questions, validation rules, and submission metadata
-- **Questionnaire Response**: Patient’s submitted answers to a questionnaire instance; includes response data, timestamp, and structured summary inputs
-- **Rehabilitation Goal**: SMART-style goal assigned to a patient; includes description, measurable target, timeframe, status, and approval history
-- **Clinician Note**: Comment or observation added by the clinician while reviewing patient data
-- **Safety Alert**: Warning generated when patient input matches predefined red-flag symptoms or unsafe recovery indicators
+- **Patient**: Mock data including name, age, diagnosis, weeks in rehabilitation, WHODAS 2.0 scores
+- **WHODAS 2.0 Question**: 12 questions across 6 domains with 5-point scale (1=None to 5=Extreme/Cannot do)
+- **Domain Score**: Calculated average score for each of 6 functional domains
+- **Disability Index**: Overall score calculated as average of all domain scores
+- **Rehabilitation Goal**: SMART-formatted goal with domain, progress percentage, and detailed criteria
+- **Chart Data**: Time-series data for progress tracking (weekly WHODAS scores)
+- **AI Message**: Chat message with role (user/assistant) and content for goal generation dialogue
 
 ## Success Criteria _(mandatory)_
 
 ### Measurable Outcomes
 
-- **SC-001**: Patients can complete the initial questionnaire on a mobile device in under 10 minutes on average
-- **SC-002**: Clinicians can review a patient’s submitted assessment and reach the goal-setting step in under 2 minutes
-- **SC-003**: The system generates at least one usable draft rehabilitation goal for the majority of completed assessments
-- **SC-004**: Clinicians can edit and approve goals without leaving the dashboard workflow
-- **SC-005**: At least 80% of patients successfully complete onboarding and submit their assessment without support
-- **SC-006**: All patient-facing and clinician-facing MVP interfaces are fully available in Russian
-- **SC-007**: The platform clearly communicates that it is not a replacement for a doctor or emergency care
+- **SC-001**: Patients can complete the WHODAS 2.0 questionnaire (12 questions) in under 5 minutes on a mobile device
+- **SC-002**: Questionnaire displays clear progress indicator and allows navigation between questions
+- **SC-003**: Results page shows domain scores with color-coded severity indicators (green=mild, yellow=moderate, red=severe)
+- **SC-004**: Clinician dashboard loads and displays all charts (radar, area, bar) within 2 seconds
+- **SC-005**: Radar chart clearly shows current vs. baseline comparison across all 6 WHODAS domains
+- **SC-006**: Progress charts show trends over 6 weeks with smooth area fills and clear legends
+- **SC-007**: AI chat generates SMART goals that include all required components (S, M, A, R, T, Domain)
+- **SC-008**: Goals are automatically added to Goals tab with editable progress sliders
+- **SC-009**: All text in patient and clinician interfaces is in Russian
+- **SC-010**: Interface is responsive and works on mobile (patient) and desktop (clinician) screen sizes
 
 ## Assumptions
 
-- Initial MVP will focus on a narrow rehabilitation scope rather than supporting all rehabilitation categories from day one
-- MVP will start with a fixed generic questionnaire; category-specific questions will be added in future iterations based on domain expert input
-- The patient interface will be web-based and optimized for mobile browsers; native mobile apps are out of scope for v1
-- The clinician interface will be web-based and optimized for desktop use
-- AI-generated goals are assistive suggestions only and always require clinician review before becoming active
-- Recovery trajectory prediction is out of scope for MVP and will be considered in a future phase
-- The platform will support Russian language only in the initial release
-- Questionnaire logic and AI suggestions will be based on structured rehabilitation logic and domain expert input
-- AI model for goal generation will be selected during implementation phase; must support free tier for MVP
-- Patient data will be stored in Supabase (PostgreSQL) with built-in authentication and row-level security
-- The platform is intended to support preparation for rehabilitation planning, not diagnose conditions or manage emergency situations
+- MVP is a demonstration/prototype without real user authentication or data persistence
+- All patient data is mock/hardcoded and resets on page refresh
+- WHODAS 2.0 questionnaire uses the standard 12-item version with 5-point scale
+- AI goal generation requires LLM API key (provided via environment variable)
+- Charts use Recharts library with default responsive behavior
+- No backend server - all logic runs client-side in Next.js
+- Russian translations are hardcoded strings, not using i18n library
+- Goal progress tracking is manual via sliders, not automated based on new assessments
+- Recovery trajectory prediction is out of scope for MVP
+- The platform is a proof-of-concept for hackathon/demo purposes
+- Any free LLM API can be used (Claude, OpenAI, Gemini, etc.) as long as it supports chat completion format
