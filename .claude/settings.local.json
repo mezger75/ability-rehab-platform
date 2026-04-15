@@ -1,0 +1,5 @@
+{
+  "permissions": {
+    "allow": ["Bash(.specify/scripts/bash/setup-plan.sh:*)", "Bash(npx tsc:*)"]
+  }
+}
