@@ -17,62 +17,62 @@ const QUESTIONS = [
   {
     id: "D1_1",
     domain: "Когниция",
-    text: "Насколько трудно было сосредоточиться на задаче дольше 10 минут?",
+    text: "Насколько трудно Вам было сосредоточиться на каком-либо занятии в течение 10 минут?",
   },
   {
     id: "D1_2",
     domain: "Когниция",
-    text: "Насколько трудно было запомнить и выполнить новое задание или инструкцию?",
+    text: "Насколько трудно Вам было освоить новую задачу, например, запомнить дорогу в незнакомое место?",
   },
   {
     id: "D2_1",
     domain: "Мобильность",
-    text: "Насколько трудно было стоять в течение длительного времени (около 30 минут)?",
+    text: "Насколько трудно Вам было стоять в течение длительного времени, например, 30 минут?",
   },
   {
     id: "D2_2",
     domain: "Мобильность",
-    text: "Насколько трудно было встать со стула или пройти длинное расстояние?",
+    text: "Насколько трудно Вам было пройти пешком большое расстояние, например, 1 километр (или полмили)?",
   },
   {
     id: "D3_1",
     domain: "Самообслуживание",
-    text: "Насколько трудно было помыться (вымыть всё тело)?",
+    text: "Насколько трудно Вам было вымыть всё своё тело целиком?",
   },
   {
     id: "D3_2",
     domain: "Самообслуживание",
-    text: "Насколько трудно было самостоятельно одеться?",
+    text: "Насколько трудно Вам было одеться?",
   },
   {
     id: "D4_1",
     domain: "Взаимодействие",
-    text: "Насколько трудно было общаться с незнакомыми людьми?",
+    text: "Насколько трудно Вам было взаимодействовать с незнакомыми людьми?",
   },
   {
     id: "D4_2",
     domain: "Взаимодействие",
-    text: "Насколько трудно было поддерживать дружеские или близкие отношения?",
+    text: "Насколько трудно Вам было поддерживать дружеские отношения?",
   },
   {
     id: "D5_1",
     domain: "Жизнедеятельность",
-    text: "Насколько трудно было справляться с повседневными домашними обязанностями?",
+    text: "Насколько трудно Вам было справляться с Вашими домашними делами и обязанностями?",
   },
   {
     id: "D5_2",
     domain: "Жизнедеятельность",
-    text: "Насколько трудно было выполнять работу или учёбу?",
+    text: "Насколько трудно Вам было выполнять Вашу основную работу или учёбу (повседневные дела)?",
   },
   {
     id: "D6_1",
     domain: "Участие",
-    text: "Насколько сильно проблемы со здоровьем влияли на вашу повседневную жизнь?",
+    text: "Насколько проблематично для Вас было участвовать в общественных мероприятиях (например, праздниках, встречах) наравне с другими людьми?",
   },
   {
     id: "D6_2",
     domain: "Участие",
-    text: "Насколько ограничения здоровья вас расстраивали или тревожили?",
+    text: "Насколько сильно Ваши проблемы со здоровьем выбивали Вас из колеи или угнетали эмоционально?",
   },
 ];
 
@@ -142,6 +142,11 @@ export default function PatientQuestionnaire() {
         });
 
         setPhase("done");
+
+        // Redirect to patient results after 3 seconds
+        setTimeout(() => {
+          router.push("/patient-results");
+        }, 3000);
       }
     }, 280);
   };
@@ -470,22 +475,60 @@ export default function PatientQuestionnaire() {
                 ))}
               </div>
             </div>
-            <button
-              onClick={handleBack}
+            <div
               style={{
-                width: "100%",
-                background: "#2563eb",
-                color: "white",
-                border: "none",
-                borderRadius: 12,
-                padding: 14,
-                fontSize: 15,
-                fontWeight: 500,
-                cursor: "pointer",
+                display: "flex",
+                gap: 12,
+                flexDirection: "column" as const,
               }}
             >
-              На главную
-            </button>
+              <button
+                onClick={() => router.push("/patient-results")}
+                style={{
+                  width: "100%",
+                  background: "#3b82f6",
+                  color: "white",
+                  border: "none",
+                  borderRadius: 12,
+                  padding: 14,
+                  fontSize: 15,
+                  fontWeight: 500,
+                  cursor: "pointer",
+                  transition: "background 0.2s",
+                }}
+                onMouseEnter={(e) =>
+                  ((e.target as HTMLButtonElement).style.background = "#2563eb")
+                }
+                onMouseLeave={(e) =>
+                  ((e.target as HTMLButtonElement).style.background = "#3b82f6")
+                }
+              >
+                Посмотреть результаты и цели →
+              </button>
+              <button
+                onClick={handleBack}
+                style={{
+                  width: "100%",
+                  background: "white",
+                  color: "#3b82f6",
+                  border: "2px solid #3b82f6",
+                  borderRadius: 12,
+                  padding: 14,
+                  fontSize: 15,
+                  fontWeight: 500,
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                }}
+                onMouseEnter={(e) => {
+                  (e.target as HTMLButtonElement).style.background = "#eff6ff";
+                }}
+                onMouseLeave={(e) => {
+                  (e.target as HTMLButtonElement).style.background = "white";
+                }}
+              >
+                На главную
+              </button>
+            </div>
           </div>
         </div>
       </SurveyWrapper>
