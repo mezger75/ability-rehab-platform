@@ -54,24 +54,26 @@ export async function POST(request: NextRequest) {
     ? `${SYSTEM_PROMPT}\n\n${patientContext}`
     : SYSTEM_PROMPT;
 
-  const response = await fetch(process.env.NEXT_PUBLIC_OPENROUTER_API_URL!, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${process.env.OPENROUTER_API_KEY_1!}`,
-      "HTTP-Referer":
-        process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
-      "X-Title": "Ability Rehab Platform",
-    },
-    body: JSON.stringify({
-      model: "openrouter/free",
-      messages: [
-        { role: "system", content: systemMessage },
-        ...(messages || []),
-      ],
-      max_tokens: 1000,
-    }),
-  });
+  const response = await fetch(
+    "https://llm.api.cloud.yandex.net/v1/chat/completions",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Api-Key ${process.env.YANDEX_API_KEY}`,
+        "HTTP-Referer": process.env.YANDEX_API_KEY || "http://localhost:3000",
+        "X-Title": "Ability Rehab Platform",
+      },
+      body: JSON.stringify({
+        model: `gpt://b1gri2r858cn9iudaaln/yandexgpt/latest`,
+        messages: [
+          { role: "system", content: systemMessage },
+          ...(messages || []),
+        ],
+        max_tokens: 1000,
+      }),
+    }
+  );
 
   const data = await response.json();
   console.log("OpenRouter response:", JSON.stringify(data).slice(0, 200));
