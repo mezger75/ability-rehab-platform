@@ -76,6 +76,16 @@ const INITIAL_MESSAGES: ChatMessage[] = [
   },
 ];
 
+interface GeneratedGoal {
+  text: string;
+  domain: string;
+  specific: string;
+  measurable: string;
+  achievable: string;
+  relevant: string;
+  timeBound: string;
+}
+
 export default function PatientResults() {
   const router = useRouter();
   const [messages, setMessages] = useState<ChatMessage[]>(INITIAL_MESSAGES);
@@ -92,44 +102,94 @@ export default function PatientResults() {
   }, [messages]);
 
   const handleSendMessage = async () => {
-    if (!inputValue.trim()) return;
+    if (!inputValue.trim() || isLoading) return;
 
     // Add user message
     const userMessage = inputValue.trim();
     setInputValue("");
-    setMessages((prev) => [...prev, { role: "user", content: userMessage }]);
+    const newMessages = [
+      ...messages,
+      { role: "user" as const, content: userMessage },
+    ];
+    setMessages(newMessages);
     setIsLoading(true);
 
-    // Simulate AI response (mock)
-    setTimeout(() => {
-      let assistantResponse = "";
+    try {
+      const res = await fetch("/api/goals/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          patient: {
+            name: "Пациент",
+            age: 0,
+            diagnosis: "Данные из опроса WHODAS",
+            vas_rest: 2,
+            vas_movement: 6,
+            grip_strength_right: 25,
+            grip_strength_left: 28,
+            quick_dash_score: 35,
+            recovery_phase: "Неделя 1",
+          },
+          messages: [
+            ...newMessages.map((m) => ({ role: m.role, content: m.content })),
+          ],
+          role: "patient",
+        }),
+      });
 
-      if (
-        userMessage.toLowerCase().includes("новая цель") ||
-        userMessage.toLowerCase().includes("добавить")
-      ) {
-        assistantResponse = `Отлично! 🎯 Давай сформулируем новую SMART-цель.\n\nРасскажи мне:\n• Какой домен её развивает? (Мобильность, Самообслуживание, Когниция, Взаимодействие и т.д.)\n• Что конкретно хочешь достичь?\n• За какой период?`;
-      } else if (
-        userMessage.toLowerCase().includes("как дела") ||
-        userMessage.toLowerCase().includes("прогресс")
-      ) {
-        assistantResponse = `По твоим текущим целям:\n\n📊 Мобильность: 60% ✓\n📊 Самообслуживание: 35% \n📊 Когниция: 45% \n\nТы молодец! Продолжай в том же духе! 💪`;
+      const data = await res.json();
+
+      if (data.goals && data.goals.length > 0) {
+        const reply = `Сформулированы SMART-цели:\n\n${data.goals
+          .map(
+            (g: GeneratedGoal, i: number) =>
+              `${i + 1}. ${g.text}\n   Домен: ${g.domain}\n   Срок: ${g.timeBound}`
+          )
+          .join("\n\n")}`;
+        setMessages((prev) => [
+          ...prev,
+          { role: "assistant" as const, content: reply },
+        ]);
+
+        // Add generated goals to the goals list
+        data.goals.forEach((g: GeneratedGoal) => {
+          const newGoal: Goal = {
+            id: Date.now() + Math.random(),
+            domain: g.domain || "Общая",
+            color: "#3b82f6",
+            progress: 0,
+            text: g.text || "",
+            description: g.relevant || "",
+            specific: g.specific || "",
+            measurable: g.measurable || "",
+            achievable: g.achievable || "",
+            relevant: g.relevant || "",
+            timeBound: g.timeBound || "",
+          };
+          setGoals((prev) => [...prev, newGoal]);
+        });
+      } else if (data.message) {
+        setMessages((prev) => [
+          ...prev,
+          { role: "assistant" as const, content: data.message },
+        ]);
       } else {
-        assistantResponse =
-          "Спасибо за сообщение! Я помогу тебе с реабилитацией. Если хочешь добавить новую цель, скажи об этом. Если есть вопросы о текущем прогрессе, спрашивай!";
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant" as const,
+            content: "Не удалось получить ответ. Попробуйте еще раз.",
+          },
+        ]);
       }
-
+    } catch (error) {
+      console.error("Error calling goals API:", error);
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: assistantResponse },
+        { role: "assistant" as const, content: "Ошибка соединения с API." },
       ]);
-      setIsLoading(false);
-    }, 500);
-  };
-
-  const handleAddGoal = () => {
-    // This would be triggered from chat interactions
-    // For now, it's a placeholder
+    }
+    setIsLoading(false);
   };
 
   const handleBack = () => {
@@ -223,9 +283,6 @@ export default function PatientResults() {
       </div>
     );
   };
-
-  // Responsive layout: mobile-first, desktop has 2-column layout
-  const isMobileLayout = true; // You could use a media query hook here
 
   return (
     <div style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
