@@ -74,9 +74,7 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
     try {
       const res = await fetch("/api/goals/generate", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           patient: {
             name: patient.name,
@@ -89,27 +87,27 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
             quick_dash_score: 35,
             recovery_phase: `Неделя ${patient.weeks}`,
           },
+          messages: [
+            ...newMsgs.map((m) => ({ role: m.role, content: m.content })),
+          ],
+          role: "doctor",
         }),
       });
 
       const data = await res.json();
-      const generatedGoals: GeneratedGoal[] = data.goals || [];
 
-      if (generatedGoals.length > 0) {
-        const reply = `Сформулированы SMART-цели:\n\n${generatedGoals
+      if (data.goals && data.goals.length > 0) {
+        const reply = `Сформулированы SMART-цели:\n\n${data.goals
           .map(
-            (g, i) =>
+            (g: GeneratedGoal, i: number) =>
               `${i + 1}. ${g.text}\n   Домен: ${g.domain}\n   Срок: ${g.timeBound}`
           )
           .join("\n\n")}`;
-
         setMsgs((prev) => [
           ...prev,
           { role: "assistant" as const, content: reply },
         ]);
-
-        // Add goals to the goals list
-        generatedGoals.forEach((g) => {
+        data.goals.forEach((g: GeneratedGoal) => {
           const newGoal: Goal = {
             id: Date.now() + Math.random(),
             domain: g.domain || "Общая",
@@ -124,12 +122,17 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
           };
           setGoals((prev) => [...prev, newGoal]);
         });
+      } else if (data.message) {
+        setMsgs((prev) => [
+          ...prev,
+          { role: "assistant" as const, content: data.message },
+        ]);
       } else {
         setMsgs((prev) => [
           ...prev,
           {
             role: "assistant" as const,
-            content: "Не удалось сформулировать цели. Попробуйте еще раз.",
+            content: "Не удалось получить ответ. Попробуйте еще раз.",
           },
         ]);
       }
