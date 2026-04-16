@@ -122,17 +122,6 @@ export const INITIAL_GOALS: Goal[] = [
   },
 ];
 
-export const INIT_MESSAGES: Array<{
-  role: "user" | "assistant";
-  content: string;
-}> = [
-  {
-    role: "assistant",
-    content:
-      "Добро пожаловать! Я ИИ-ассистент по реабилитации.\n\nПомогу сформулировать персонализированные SMART-цели для пациента Алексея Волкова (инсульт, 6-я неделя реабилитации).\n\nТекущие индексы WHODAS 2.0: Когниция 2.3 · Мобильность 2.5 · Самообслуживание 2.1 · Взаимодействие 2.0\n\nС чего начнём?",
-  },
-];
-
 export const GOAL_COLORS = [
   "#3b82f6",
   "#8b5cf6",

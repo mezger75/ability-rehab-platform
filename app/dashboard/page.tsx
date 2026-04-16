@@ -20,7 +20,7 @@ import {
   Cell,
 } from "recharts";
 import type { Goal, GeneratedGoal, Submission, Patient } from "../types";
-import { INITIAL_GOALS, INIT_MESSAGES, GOAL_COLORS } from "../mockData";
+import { INITIAL_GOALS, GOAL_COLORS } from "../mockData";
 import { DashboardSkeleton } from "./DashboardSkeleton";
 import { OverviewTab } from "./OverviewTab";
 import { ProgressTab } from "./ProgressTab";
@@ -65,12 +65,28 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
     "overview"
   );
   const [goals, setGoals] = useState(INITIAL_GOALS);
-  const [msgs, setMsgs] =
-    useState<Array<{ role: "user" | "assistant"; content: string }>>(
-      INIT_MESSAGES
-    );
+  const [msgs, setMsgs] = useState<
+    Array<{ role: "user" | "assistant"; content: string }>
+  >([]);
   const [input, setInput] = useState("");
   const [loadingGoals, setLoadingGoals] = useState(false);
+
+  // Generate initial message based on selected patient
+  useEffect(() => {
+    if (patient) {
+      const domainScores = patient.domainScores;
+      const initialMessage = domainScores
+        ? `Добро пожаловать! Я ИИ-ассистент по реабилитации.\n\nПомогу сформулировать персонализированные SMART-цели для пациента ${patient.name}.\n\nТекущие индексы WHODAS 2.0:\nКогниция ${domainScores.cognition.toFixed(1)} · Мобильность ${domainScores.mobility.toFixed(1)} · Самообслуживание ${domainScores.self_care.toFixed(1)} · Взаимодействие ${domainScores.interaction.toFixed(1)} · Жизнедеятельность ${domainScores.life_activities.toFixed(1)} · Участие ${domainScores.participation.toFixed(1)}\n\nС чего начнём?`
+        : `Добро пожаловать! Я ИИ-ассистент по реабилитации.\n\nПомогу сформулировать персонализированные SMART-цели для пациента ${patient.name}.\n\nС чего начнём?`;
+
+      setMsgs([
+        {
+          role: "assistant",
+          content: initialMessage,
+        },
+      ]);
+    }
+  }, [patient]);
 
   useEffect(() => {
     const fetchSurveys = async () => {
