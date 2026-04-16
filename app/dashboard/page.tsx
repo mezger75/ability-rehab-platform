@@ -24,7 +24,6 @@ import {
   PATIENTS,
   PROGRESS_DATA,
   RADAR_DATA,
-  COMPARE_DATA,
   INITIAL_GOALS,
   INIT_MESSAGES,
   GOAL_COLORS,
@@ -113,7 +112,7 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
             id: Date.now() + Math.random(),
             domain: g.domain || "Общая",
             color: GOAL_COLORS[goals.length % GOAL_COLORS.length],
-            progress: 0,
+            gasScore: 0,
             text: g.text || "",
             specific: g.specific || "",
             measurable: g.measurable || "",
@@ -435,13 +434,13 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
                   {
                     label: "Улучшение",
                     value: "↓43%",
-                    sub: "за 6 нед",
+                    sub: "с начала курса",
                     color: "#16a34a",
                   },
                   {
                     label: "Опросов",
-                    value: "6",
-                    sub: "заполнено",
+                    value: "2",
+                    sub: "ежемесячно",
                     color: "#1e293b",
                   },
                 ].map((s2, i) => (
@@ -519,11 +518,6 @@ interface OverviewTabProps {
 }
 
 function OverviewTab({ goals }: OverviewTabProps) {
-  const goalsData = goals.map((g) => ({
-    name: g.domain || "Цель",
-    прогресс: g.progress,
-  }));
-
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       <div
@@ -548,8 +542,8 @@ function OverviewTab({ goals }: OverviewTabProps) {
           },
           {
             label: "Опросников",
-            value: "6",
-            sub: "заполнено",
+            value: "2",
+            sub: "ежемесячно",
             color: "#475569",
           },
           {
@@ -660,7 +654,7 @@ function OverviewTab({ goals }: OverviewTabProps) {
               margin: "0 0 16px",
             }}
           >
-            Прогресс SMART-целей (%)
+            Статус достижения целей (GAS)
           </h3>
           {goals.length === 0 ? (
             <div
@@ -682,46 +676,89 @@ function OverviewTab({ goals }: OverviewTabProps) {
               </div>
             </div>
           ) : (
-            <ResponsiveContainer
-              width="100%"
-              height={Math.max(goals.length * 56 + 40, 200)}
-            >
-              <BarChart
-                data={goalsData}
-                layout="vertical"
-                margin={{ left: 100, right: 30, top: 5, bottom: 5 }}
-              >
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  horizontal={false}
-                  stroke="#f1f5f9"
-                />
-                <XAxis
-                  type="number"
-                  domain={[0, 100]}
-                  tickFormatter={(v) => `${v}%`}
-                  tick={{ fontSize: 11 }}
-                />
-                <YAxis
-                  type="category"
-                  dataKey="name"
-                  tick={{ fontSize: 11 }}
-                  width={95}
-                />
-                <Tooltip
-                  formatter={(v) => {
-                    if (v === undefined || v === null) return ["", ""];
-                    const val = typeof v === "number" ? `${v}%` : String(v);
-                    return [val, "Прогресс"];
-                  }}
-                />
-                <Bar dataKey="прогресс" radius={[0, 4, 4, 0]} maxBarSize={28}>
-                  {goals.map((g, i) => (
-                    <Cell key={i} fill={g.color} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {goals.map((g) => {
+                const gasLabels = {
+                  "-2": "Исходный",
+                  "-1": "Лучше",
+                  "0": "Цель",
+                  "1": "Выше",
+                  "2": "Идеал",
+                };
+                const gasColors = {
+                  "-2": "#ef4444",
+                  "-1": "#f97316",
+                  "0": "#3b82f6",
+                  "1": "#10b981",
+                  "2": "#8b5cf6",
+                };
+                return (
+                  <div
+                    key={g.id}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 12,
+                      padding: 12,
+                      background: "#f8fafc",
+                      borderRadius: 8,
+                      borderLeft: `3px solid ${g.color}`,
+                    }}
+                  >
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div
+                        style={{
+                          fontSize: 12,
+                          fontWeight: 600,
+                          color: "#1e293b",
+                          marginBottom: 2,
+                        }}
+                      >
+                        {g.domain || "Цель"}
+                      </div>
+                      <div
+                        style={{
+                          fontSize: 11,
+                          color: "#94a3b8",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {g.text}
+                      </div>
+                    </div>
+                    <div
+                      style={{
+                        background:
+                          gasColors[
+                            String(g.gasScore) as keyof typeof gasColors
+                          ] || "#cbd5e1",
+                        color: "white",
+                        padding: "4px 12px",
+                        borderRadius: 6,
+                        fontSize: 12,
+                        fontWeight: 600,
+                        whiteSpace: "nowrap",
+                        textAlign: "center",
+                        minWidth: 60,
+                      }}
+                    >
+                      {g.gasScore >= 0 ? "+" : ""}
+                      {g.gasScore}
+                      <br />
+                      <span
+                        style={{ fontSize: 10, fontWeight: 500, opacity: 0.9 }}
+                      >
+                        {gasLabels[
+                          String(g.gasScore) as keyof typeof gasLabels
+                        ] || ""}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           )}
         </div>
       </div>
@@ -752,7 +789,7 @@ function ProgressTab() {
         <h3
           style={{ fontSize: 14, fontWeight: 500, color: "#374151", margin: 0 }}
         >
-          Динамика функциональных ограничений по неделям
+          Динамика функциональных ограничений (ежемесячно)
         </h3>
         <p style={{ fontSize: 12, color: "#94a3b8", margin: "4px 0 16px" }}>
           Снижение значений = улучшение состояния (шкала 1–5)
@@ -806,75 +843,6 @@ function ProgressTab() {
             ))}
           </AreaChart>
         </ResponsiveContainer>
-      </div>
-      <div
-        style={{
-          background: "white",
-          borderRadius: 14,
-          padding: 20,
-          border: "1px solid #e2e8f0",
-        }}
-      >
-        <h3
-          style={{
-            fontSize: 14,
-            fontWeight: 500,
-            color: "#374151",
-            margin: "0 0 16px",
-          }}
-        >
-          Сравнение пациентов — текущий индекс WHODAS 2.0
-        </h3>
-        <ResponsiveContainer width="100%" height={200}>
-          <BarChart
-            data={COMPARE_DATA}
-            margin={{ top: 5, right: 20, bottom: 5, left: 0 }}
-          >
-            <CartesianGrid
-              strokeDasharray="3 3"
-              vertical={false}
-              stroke="#f1f5f9"
-            />
-            <XAxis dataKey="name" tick={{ fontSize: 13 }} />
-            <YAxis domain={[0, 5]} tick={{ fontSize: 12 }} tickCount={6} />
-            <Tooltip
-              formatter={(v) => {
-                if (v === undefined || v === null) return ["", ""];
-                const val = typeof v === "number" ? v.toFixed(1) : String(v);
-                return [val, "Индекс WHODAS"];
-              }}
-            />
-            <Bar dataKey="value" radius={[6, 6, 0, 0]} maxBarSize={60}>
-              {PATIENTS.map((p, i) => (
-                <Cell key={i} fill={p.color} />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
-        <div style={{ display: "flex", gap: 16, marginTop: 12 }}>
-          {PATIENTS.map((p, i) => (
-            <div
-              key={i}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-                fontSize: 12,
-                color: "#64748b",
-              }}
-            >
-              <div
-                style={{
-                  width: 10,
-                  height: 10,
-                  borderRadius: 2,
-                  background: p.color,
-                }}
-              />
-              {p.name.split(" ")[0]} {p.name.split(" ")[1]?.[0]}.
-            </div>
-          ))}
-        </div>
       </div>
     </div>
   );
@@ -976,44 +944,68 @@ function GoalsTab({ goals, setGoals }: GoalsTabProps) {
               style={{
                 display: "flex",
                 justifyContent: "space-between",
-                marginBottom: 6,
+                alignItems: "center",
+                marginBottom: 12,
               }}
             >
-              <span style={{ fontSize: 12, color: "#94a3b8" }}>
-                Прогресс выполнения
-              </span>
-              <span style={{ fontSize: 12, fontWeight: 600, color: g.color }}>
-                {g.progress}%
+              <span style={{ fontSize: 12, color: "#94a3b8", fontWeight: 500 }}>
+                Достижение цели (GAS)
               </span>
             </div>
-            <div style={{ background: "#f1f5f9", borderRadius: 99, height: 8 }}>
-              <div
-                style={{
-                  width: `${g.progress}%`,
-                  height: 8,
-                  borderRadius: 99,
-                  background: g.color,
-                  transition: "width 0.4s",
-                }}
-              />
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(5, 1fr)",
+                gap: 6,
+              }}
+            >
+              {[-2, -1, 0, 1, 2].map((score) => (
+                <button
+                  key={score}
+                  onClick={() =>
+                    setGoals((prev) =>
+                      prev.map((x) =>
+                        x.id === g.id ? { ...x, gasScore: score } : x
+                      )
+                    )
+                  }
+                  style={{
+                    padding: "10px 8px",
+                    borderRadius: 8,
+                    border:
+                      g.gasScore === score
+                        ? `2px solid ${g.color}`
+                        : "1px solid #e2e8f0",
+                    background: g.gasScore === score ? `${g.color}15` : "white",
+                    cursor: "pointer",
+                    fontSize: 13,
+                    fontWeight: g.gasScore === score ? 600 : 500,
+                    color: g.gasScore === score ? g.color : "#64748b",
+                    transition: "all 0.15s",
+                  }}
+                >
+                  {score >= 0 ? "+" : ""}
+                  {score}
+                </button>
+              ))}
             </div>
-            <input
-              type="range"
-              min={0}
-              max={100}
-              step={1}
-              value={g.progress}
-              onChange={(e) =>
-                setGoals((prev) =>
-                  prev.map((x) =>
-                    x.id === g.id
-                      ? { ...x, progress: Number(e.target.value) }
-                      : x
-                  )
-                )
-              }
-              style={{ width: "100%", marginTop: 6, accentColor: g.color }}
-            />
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(5, 1fr)",
+                gap: 6,
+                marginTop: 6,
+                fontSize: 10,
+                color: "#94a3b8",
+                textAlign: "center",
+              }}
+            >
+              <span>Исходн.</span>
+              <span>Лучше</span>
+              <span>Цель</span>
+              <span>Выше</span>
+              <span>Идеал</span>
+            </div>
           </div>
           <div
             style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}
@@ -1061,70 +1053,6 @@ function GoalsTab({ goals, setGoals }: GoalsTabProps) {
           </div>
         </div>
       ))}
-      {goals.length > 0 && (
-        <div
-          style={{
-            background: "white",
-            borderRadius: 14,
-            padding: 20,
-            border: "1px solid #e2e8f0",
-          }}
-        >
-          <h3
-            style={{
-              fontSize: 14,
-              fontWeight: 500,
-              color: "#374151",
-              margin: "0 0 16px",
-            }}
-          >
-            Сводный прогресс целей
-          </h3>
-          <ResponsiveContainer
-            width="100%"
-            height={Math.max(goals.length * 52 + 40, 160)}
-          >
-            <BarChart
-              data={goals.map((g) => ({
-                name: g.domain || "Цель",
-                прогресс: g.progress,
-              }))}
-              layout="vertical"
-              margin={{ left: 110, right: 40, top: 5, bottom: 5 }}
-            >
-              <CartesianGrid
-                strokeDasharray="3 3"
-                horizontal={false}
-                stroke="#f1f5f9"
-              />
-              <XAxis
-                type="number"
-                domain={[0, 100]}
-                tickFormatter={(v) => `${v}%`}
-                tick={{ fontSize: 11 }}
-              />
-              <YAxis
-                type="category"
-                dataKey="name"
-                tick={{ fontSize: 11 }}
-                width={105}
-              />
-              <Tooltip
-                formatter={(v) => {
-                  if (v === undefined || v === null) return ["", ""];
-                  const val = typeof v === "number" ? `${v}%` : String(v);
-                  return [val, "Прогресс"];
-                }}
-              />
-              <Bar dataKey="прогресс" radius={[0, 4, 4, 0]} maxBarSize={28}>
-                {goals.map((g, i) => (
-                  <Cell key={i} fill={g.color} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      )}
     </div>
   );
 }
