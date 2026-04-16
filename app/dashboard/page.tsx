@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   RadarChart,
@@ -21,13 +21,14 @@ import {
 } from "recharts";
 import type { Goal, GeneratedGoal, Submission, Patient } from "../types";
 import {
-  PATIENTS,
   PROGRESS_DATA,
-  RADAR_DATA,
   INITIAL_GOALS,
   INIT_MESSAGES,
   GOAL_COLORS,
 } from "../mockData";
+import { WHODASProfileChart } from "./WHODASProfileChart";
+import { GoalAchievementStatus } from "./GoalAchievementStatus";
+import { DashboardSkeleton } from "./DashboardSkeleton";
 
 // Wrapper component to apply font family
 function DashboardWrapper({ children }: { children: React.ReactNode }) {
@@ -45,8 +46,24 @@ interface DoctorDashboardProps {
   submissions: Submission[];
 }
 
+interface SurveyResponse {
+  id: string | number;
+  patient_name: string;
+  created_at: string;
+  domain_scores: {
+    cognition: number;
+    mobility: number;
+    self_care: number;
+    interaction: number;
+    life_activities: number;
+    participation: number;
+  };
+}
+
 function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
-  const [patient, setPatient] = useState(PATIENTS[0]);
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [patient, setPatient] = useState<Patient | null>(null);
+  const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<"overview" | "progress" | "goals" | "chat">(
     "overview"
   );
@@ -56,11 +73,48 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
       INIT_MESSAGES
     );
   const [input, setInput] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loadingGoals, setLoadingGoals] = useState(false);
+
+  useEffect(() => {
+    const fetchSurveys = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch("/api/survey");
+        const result = await res.json();
+
+        if (result.data && result.data.length > 0) {
+          // Transform survey responses into Patient objects
+          const surveyPatients: Patient[] = result.data.map(
+            (survey: SurveyResponse) => ({
+              id: survey.id,
+              name: survey.patient_name || "Пациент",
+              age: 0,
+              diagnosis: "Данные из опроса WHODAS",
+              avatar: survey.patient_name?.[0]?.toUpperCase() || "П",
+              weeks: 0,
+              domainScores: survey.domain_scores,
+            })
+          );
+
+          setPatients(surveyPatients);
+          // Set first patient as selected if none selected
+          if (!patient && surveyPatients.length > 0) {
+            setPatient(surveyPatients[0]);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching surveys:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchSurveys();
+  }, []);
+
   const chatEnd = useRef<HTMLDivElement>(null);
 
   const sendMessage = async () => {
-    if (!input.trim() || loading) return;
+    if (!input.trim() || loadingGoals) return;
     const userText = input.trim();
     setInput("");
     const userMsg: { role: "user" | "assistant"; content: string } = {
@@ -69,7 +123,7 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
     };
     const newMsgs = [...msgs, userMsg];
     setMsgs(newMsgs);
-    setLoading(true);
+    setLoadingGoals(true);
 
     try {
       const res = await fetch("/api/goals/generate", {
@@ -79,15 +133,15 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
         },
         body: JSON.stringify({
           patient: {
-            name: patient.name,
-            age: patient.age,
-            diagnosis: patient.diagnosis,
+            name: patient?.name,
+            age: patient?.age,
+            diagnosis: patient?.diagnosis,
             vas_rest: 2,
             vas_movement: 6,
             grip_strength_right: 25,
             grip_strength_left: 28,
             quick_dash_score: 35,
-            recovery_phase: `Неделя ${patient.weeks}`,
+            recovery_phase: `Неделя ${patient?.weeks}`,
           },
         }),
       });
@@ -140,7 +194,7 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
         { role: "assistant" as const, content: "Ошибка соединения с API." },
       ]);
     }
-    setLoading(false);
+    setLoadingGoals(false);
     setTimeout(
       () => chatEnd.current?.scrollIntoView({ behavior: "smooth" }),
       100
@@ -261,15 +315,15 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
               Пациенты
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              {PATIENTS.map((p) => (
+              {patients.map((p) => (
                 <button
                   key={p.id}
                   onClick={() => setPatient(p)}
                   style={{
                     width: "100%",
-                    background: patient.id === p.id ? "#eff6ff" : "none",
+                    background: patient?.id === p.id ? "#eff6ff" : "none",
                     border:
-                      patient.id === p.id
+                      patient?.id === p.id
                         ? "1px solid #bfdbfe"
                         : "1px solid transparent",
                     borderRadius: 10,
@@ -286,8 +340,9 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
                         width: 34,
                         height: 34,
                         borderRadius: "50%",
-                        background: patient.id === p.id ? "#dbeafe" : "#f1f5f9",
-                        color: patient.id === p.id ? "#1d4ed8" : "#64748b",
+                        background:
+                          patient?.id === p.id ? "#dbeafe" : "#f1f5f9",
+                        color: patient?.id === p.id ? "#1d4ed8" : "#64748b",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -371,137 +426,180 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
             flexDirection: "column",
           }}
         >
-          {/* Patient header */}
-          <div
-            style={{
-              background: "white",
-              borderBottom: "1px solid #e2e8f0",
-              padding: "16px 24px",
-              flexShrink: 0,
-            }}
-          >
+          {!patient ? (
             <div
               style={{
+                flex: 1,
                 display: "flex",
                 alignItems: "center",
-                gap: 16,
-                marginBottom: 16,
+                justifyContent: "center",
+                color: "#94a3b8",
+                fontSize: 16,
               }}
             >
+              {loading ? (
+                <DashboardSkeleton />
+              ) : patients.length === 0 ? (
+                "Нет данных пациентов"
+              ) : (
+                "Выберите пациента из списка"
+              )}
+            </div>
+          ) : (
+            <>
+              {/* Patient header */}
               <div
                 style={{
-                  width: 46,
-                  height: 46,
-                  borderRadius: 12,
-                  background: "#dbeafe",
-                  color: "#1d4ed8",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontWeight: 600,
-                  fontSize: 15,
+                  background: "white",
+                  borderBottom: "1px solid #e2e8f0",
+                  padding: "16px 24px",
+                  flexShrink: 0,
                 }}
               >
-                {patient.avatar}
-              </div>
-              <div style={{ flex: 1 }}>
-                <h2
+                <div
                   style={{
-                    fontSize: 16,
-                    fontWeight: 600,
-                    color: "#1e293b",
-                    margin: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 16,
+                    marginBottom: 16,
                   }}
                 >
-                  {patient.name}
-                </h2>
-                <p style={{ fontSize: 13, color: "#94a3b8", margin: 0 }}>
-                  {patient.diagnosis} · {patient.age} лет · Неделя{" "}
-                  {patient.weeks}
-                </p>
-              </div>
-              <div style={{ display: "flex", gap: 20 }}>
-                {[
-                  {
-                    label: "Индекс WHODAS",
-                    value: "2.3",
-                    sub: "из 5.0",
-                    color: "#1e293b",
-                  },
-                  {
-                    label: "Улучшение",
-                    value: "↓43%",
-                    sub: "с начала курса",
-                    color: "#16a34a",
-                  },
-                  {
-                    label: "Опросов",
-                    value: "2",
-                    sub: "ежемесячно",
-                    color: "#1e293b",
-                  },
-                ].map((s2, i) => (
-                  <div key={i} style={{ textAlign: "center" }}>
-                    <p style={{ fontSize: 11, color: "#94a3b8", margin: 0 }}>
-                      {s2.label}
-                    </p>
-                    <p
+                  <div
+                    style={{
+                      width: 46,
+                      height: 46,
+                      borderRadius: 12,
+                      background: "#dbeafe",
+                      color: "#1d4ed8",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontWeight: 600,
+                      fontSize: 15,
+                    }}
+                  >
+                    {patient.avatar}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <h2
                       style={{
-                        fontSize: 20,
-                        fontWeight: 700,
-                        color: s2.color,
-                        margin: "2px 0 0",
+                        fontSize: 16,
+                        fontWeight: 600,
+                        color: "#1e293b",
+                        margin: 0,
                       }}
                     >
-                      {s2.value}
-                    </p>
-                    <p style={{ fontSize: 11, color: "#94a3b8", margin: 0 }}>
-                      {s2.sub}
+                      {patient.name}
+                    </h2>
+                    <p style={{ fontSize: 13, color: "#94a3b8", margin: 0 }}>
+                      {patient.diagnosis} · {patient.age} лет · Неделя{" "}
+                      {patient.weeks}
                     </p>
                   </div>
-                ))}
+                  <div style={{ display: "flex", gap: 20 }}>
+                    {[
+                      {
+                        label: "Индекс WHODAS",
+                        value: patient.domainScores
+                          ? (
+                              (patient.domainScores.cognition +
+                                patient.domainScores.mobility +
+                                patient.domainScores.self_care +
+                                patient.domainScores.interaction +
+                                patient.domainScores.life_activities +
+                                patient.domainScores.participation) /
+                              6
+                            ).toFixed(1)
+                          : "—",
+                        sub: "из 5.0",
+                        color: "#1e293b",
+                      },
+                      {
+                        label: "Улучшение",
+                        value: "—",
+                        sub: "нет данных",
+                        color: "#94a3b8",
+                      },
+                      {
+                        label: "Опросов",
+                        value: "1",
+                        sub: "заполнено",
+                        color: "#1e293b",
+                      },
+                    ].map((s2, i) => (
+                      <div key={i} style={{ textAlign: "center" }}>
+                        <p
+                          style={{ fontSize: 11, color: "#94a3b8", margin: 0 }}
+                        >
+                          {s2.label}
+                        </p>
+                        <p
+                          style={{
+                            fontSize: 20,
+                            fontWeight: 700,
+                            color: s2.color,
+                            margin: "2px 0 0",
+                          }}
+                        >
+                          {s2.value}
+                        </p>
+                        <p
+                          style={{ fontSize: 11, color: "#94a3b8", margin: 0 }}
+                        >
+                          {s2.sub}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div style={{ display: "flex", gap: 4 }}>
+                  {tabs.map((t) => (
+                    <button
+                      key={t.id}
+                      onClick={() =>
+                        setTab(
+                          t.id as "overview" | "progress" | "goals" | "chat"
+                        )
+                      }
+                      style={{
+                        padding: "6px 16px",
+                        borderRadius: 8,
+                        border: "none",
+                        cursor: "pointer",
+                        fontSize: 13,
+                        fontWeight: 500,
+                        background: tab === t.id ? "#2563eb" : "none",
+                        color: tab === t.id ? "white" : "#64748b",
+                        transition: "all 0.15s",
+                      }}
+                    >
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
-            <div style={{ display: "flex", gap: 4 }}>
-              {tabs.map((t) => (
-                <button
-                  key={t.id}
-                  onClick={() =>
-                    setTab(t.id as "overview" | "progress" | "goals" | "chat")
-                  }
-                  style={{
-                    padding: "6px 16px",
-                    borderRadius: 8,
-                    border: "none",
-                    cursor: "pointer",
-                    fontSize: 13,
-                    fontWeight: 500,
-                    background: tab === t.id ? "#2563eb" : "none",
-                    color: tab === t.id ? "white" : "#64748b",
-                    transition: "all 0.15s",
-                  }}
-                >
-                  {t.label}
-                </button>
-              ))}
-            </div>
-          </div>
 
-          <div style={{ padding: 24, flex: 1 }}>
-            {tab === "overview" && <OverviewTab goals={goals} />}
-            {tab === "progress" && <ProgressTab />}
-            {tab === "goals" && <GoalsTab goals={goals} setGoals={setGoals} />}
-            {tab === "chat" && (
-              <ChatTab
-                msgs={msgs}
-                input={input}
-                setInput={setInput}
-                sendMessage={sendMessage}
-                loading={loading}
-                chatEnd={chatEnd as React.RefObject<HTMLDivElement>}
-              />
-            )}
-          </div>
+              <div style={{ padding: 24, flex: 1 }}>
+                {tab === "overview" && (
+                  <OverviewTab goals={goals} patient={patient} />
+                )}
+                {tab === "progress" && <ProgressTab />}
+                {tab === "goals" && (
+                  <GoalsTab goals={goals} setGoals={setGoals} />
+                )}
+                {tab === "chat" && (
+                  <ChatTab
+                    msgs={msgs}
+                    input={input}
+                    setInput={setInput}
+                    sendMessage={sendMessage}
+                    loading={loadingGoals}
+                    chatEnd={chatEnd as React.RefObject<HTMLDivElement>}
+                  />
+                )}
+              </div>
+            </>
+          )}
         </main>
       </div>
     </div>
@@ -512,9 +610,26 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
 
 interface OverviewTabProps {
   goals: Goal[];
+  patient: Patient | null;
 }
 
-function OverviewTab({ goals }: OverviewTabProps) {
+function OverviewTab({ goals, patient }: OverviewTabProps) {
+  if (!patient) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          height: "100%",
+          color: "#94a3b8",
+          fontSize: 16,
+        }}
+      >
+        Выберите пациента
+      </div>
+    );
+  }
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       <div
@@ -527,20 +642,30 @@ function OverviewTab({ goals }: OverviewTabProps) {
         {[
           {
             label: "Общий индекс",
-            value: "2.3",
+            value: patient.domainScores
+              ? (
+                  (patient.domainScores.cognition +
+                    patient.domainScores.mobility +
+                    patient.domainScores.self_care +
+                    patient.domainScores.interaction +
+                    patient.domainScores.life_activities +
+                    patient.domainScores.participation) /
+                  6
+                ).toFixed(1)
+              : "—",
             sub: "шкала 1–5",
             color: "#2563eb",
           },
           {
             label: "Динамика",
-            value: "↓43%",
-            sub: "за период",
-            color: "#16a34a",
+            value: "—",
+            sub: "нет данных",
+            color: "#94a3b8",
           },
           {
             label: "Опросников",
-            value: "2",
-            sub: "ежемесячно",
+            value: "1",
+            sub: "заполнено",
             color: "#475569",
           },
           {
@@ -577,187 +702,8 @@ function OverviewTab({ goals }: OverviewTabProps) {
         ))}
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
-        <div
-          style={{
-            background: "white",
-            borderRadius: 14,
-            padding: 20,
-            border: "1px solid #e2e8f0",
-          }}
-        >
-          <h3
-            style={{
-              fontSize: 14,
-              fontWeight: 500,
-              color: "#374151",
-              margin: "0 0 16px",
-            }}
-          >
-            Профиль по доменам WHODAS 2.0
-          </h3>
-          <ResponsiveContainer width="100%" height={280}>
-            <RadarChart
-              data={RADAR_DATA}
-              margin={{ top: 10, right: 20, bottom: 10, left: 20 }}
-            >
-              <PolarGrid stroke="#e2e8f0" />
-              <PolarAngleAxis
-                dataKey="domain"
-                tick={{ fontSize: 11, fill: "#6b7280" }}
-              />
-              <PolarRadiusAxis
-                domain={[0, 5]}
-                tick={{ fontSize: 9, fill: "#9ca3af" }}
-                tickCount={4}
-              />
-              <Radar
-                name="Начало реабилитации"
-                dataKey="start"
-                stroke="#cbd5e1"
-                fill="#cbd5e1"
-                fillOpacity={0.35}
-              />
-              <Radar
-                name="Текущее состояние"
-                dataKey="current"
-                stroke="#2563eb"
-                fill="#2563eb"
-                fillOpacity={0.45}
-              />
-              <Legend iconSize={10} wrapperStyle={{ fontSize: 12 }} />
-              <Tooltip
-                formatter={(v) => {
-                  if (v === undefined || v === null) return ["", ""];
-                  const val = typeof v === "number" ? v.toFixed(1) : String(v);
-                  return [val, "Индекс"];
-                }}
-              />
-            </RadarChart>
-          </ResponsiveContainer>
-        </div>
-        <div
-          style={{
-            background: "white",
-            borderRadius: 14,
-            padding: 20,
-            border: "1px solid #e2e8f0",
-          }}
-        >
-          <h3
-            style={{
-              fontSize: 14,
-              fontWeight: 500,
-              color: "#374151",
-              margin: "0 0 16px",
-            }}
-          >
-            Статус достижения целей (GAS)
-          </h3>
-          {goals.length === 0 ? (
-            <div
-              style={{
-                height: 280,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "#94a3b8",
-                fontSize: 14,
-                textAlign: "center",
-              }}
-            >
-              <div>
-                <p>Нет активных целей</p>
-                <p style={{ fontSize: 12 }}>
-                  Перейдите в «ИИ-чат» для создания
-                </p>
-              </div>
-            </div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {goals.map((g) => {
-                const gasLabels = {
-                  "-2": "Исходный",
-                  "-1": "Лучше",
-                  "0": "Цель",
-                  "1": "Выше",
-                  "2": "Идеал",
-                };
-                const gasColors = {
-                  "-2": "#ef4444",
-                  "-1": "#f97316",
-                  "0": "#3b82f6",
-                  "1": "#10b981",
-                  "2": "#8b5cf6",
-                };
-                return (
-                  <div
-                    key={g.id}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 12,
-                      padding: 12,
-                      background: "#f8fafc",
-                      borderRadius: 8,
-                      borderLeft: `3px solid ${g.color}`,
-                    }}
-                  >
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div
-                        style={{
-                          fontSize: 12,
-                          fontWeight: 600,
-                          color: "#1e293b",
-                          marginBottom: 2,
-                        }}
-                      >
-                        {g.domain || "Цель"}
-                      </div>
-                      <div
-                        style={{
-                          fontSize: 11,
-                          color: "#94a3b8",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        {g.text}
-                      </div>
-                    </div>
-                    <div
-                      style={{
-                        background:
-                          gasColors[
-                            String(g.gasScore) as keyof typeof gasColors
-                          ] || "#cbd5e1",
-                        color: "white",
-                        padding: "4px 12px",
-                        borderRadius: 6,
-                        fontSize: 12,
-                        fontWeight: 600,
-                        whiteSpace: "nowrap",
-                        textAlign: "center",
-                        minWidth: 60,
-                      }}
-                    >
-                      {g.gasScore >= 0 ? "+" : ""}
-                      {g.gasScore}
-                      <br />
-                      <span
-                        style={{ fontSize: 10, fontWeight: 500, opacity: 0.9 }}
-                      >
-                        {gasLabels[
-                          String(g.gasScore) as keyof typeof gasLabels
-                        ] || ""}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
+        <WHODASProfileChart patient={patient} />
+        <GoalAchievementStatus goals={goals} />
       </div>
     </div>
   );

@@ -107,11 +107,11 @@ export default function PatientQuestionnaire() {
   const progress = Math.round((step / QUESTIONS.length) * 100);
   const q = QUESTIONS[step];
 
-  const handleAnswer = (value: number) => {
+  const handleAnswer = async (value: number) => {
     const newAnswers = { ...answers, [q.id]: value };
     setAnswers(newAnswers);
     setSelected(value);
-    setTimeout(() => {
+    setTimeout(async () => {
       setSelected(null);
       if (step < QUESTIONS.length - 1) {
         setStep(step + 1);
@@ -132,14 +132,25 @@ export default function PatientQuestionnaire() {
             (scores.reduce((a, b) => a + b.score, 0) / scores.length) * 10
           ) / 10;
 
-        // TODO: Send data to API or store in state management
-        console.log({
-          name: name || "Пациент",
-          answers: newAnswers,
-          scores,
-          total,
-          date: new Date(),
-        });
+        // Send data to API
+        try {
+          const response = await fetch("/api/survey", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              patient_name: name || "Пациент",
+              answers: newAnswers,
+            }),
+          });
+
+          if (!response.ok) {
+            console.error("Failed to save survey data");
+          }
+        } catch (error) {
+          console.error("Error saving survey data:", error);
+        }
 
         setPhase("done");
 

@@ -32,11 +32,19 @@ export interface Submission {
 }
 
 export interface Patient {
-  id: string;
+  id: string | number;
   name: string;
   age: number;
   diagnosis: string;
   weeks: number;
   avatar: string;
-  color: string;
+  color?: string;
+  domainScores?: {
+    cognition: number;
+    mobility: number;
+    self_care: number;
+    interaction: number;
+    life_activities: number;
+    participation: number;
+  };
 }
