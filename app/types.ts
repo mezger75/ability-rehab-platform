@@ -4,7 +4,7 @@ export interface Goal {
   id: number;
   domain: string;
   color: string;
-  progress: number;
+  gasScore: number; // -2 to +2
   text: string;
   specific: string;
   measurable: string;

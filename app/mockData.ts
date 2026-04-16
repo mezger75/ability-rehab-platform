@@ -34,42 +34,21 @@ export const PATIENTS: Patient[] = [
 
 export const PROGRESS_DATA = [
   {
-    week: "Нед 1",
+    week: "Месяц 1",
     Когниция: 4.2,
     Мобильность: 4.5,
     Самообслуж: 3.8,
     Участие: 4.1,
   },
   {
-    week: "Нед 2",
-    Когниция: 3.8,
-    Мобильность: 4.1,
-    Самообслуж: 3.5,
-    Участие: 3.9,
-  },
-  {
-    week: "Нед 3",
-    Когниция: 3.5,
-    Мобильность: 3.8,
-    Самообслуж: 3.2,
-    Участие: 3.5,
-  },
-  {
-    week: "Нед 4",
-    Когниция: 3.0,
-    Мобильность: 3.3,
-    Самообслуж: 2.8,
-    Участие: 3.1,
-  },
-  {
-    week: "Нед 5",
+    week: "Месяц 2",
     Когниция: 2.7,
     Мобильность: 2.9,
     Самообслуж: 2.5,
     Участие: 2.8,
   },
   {
-    week: "Нед 6",
+    week: "Месяц 3",
     Когниция: 2.3,
     Мобильность: 2.5,
     Самообслуж: 2.1,
@@ -78,12 +57,12 @@ export const PROGRESS_DATA = [
 ];
 
 export const RADAR_DATA = [
-  { domain: "Когниция", current: 2.3, start: 4.2 },
-  { domain: "Мобильность", current: 2.5, start: 4.5 },
-  { domain: "Самообслуж.", current: 2.1, start: 3.8 },
-  { domain: "Взаимодейств.", current: 2.0, start: 3.2 },
-  { domain: "Жизнедеят.", current: 2.4, start: 4.0 },
-  { domain: "Участие", current: 2.5, start: 4.1 },
+  { domain: "Когниция", current: 4.2, start: 2.3 },
+  { domain: "Мобильность", current: 4.5, start: 2.5 },
+  { domain: "Самообслуж.", current: 3.8, start: 2.1 },
+  { domain: "Взаимодейств.", current: 3.2, start: 2.0 },
+  { domain: "Жизнедеят.", current: 4.0, start: 2.4 },
+  { domain: "Участие", current: 4.1, start: 2.5 },
 ];
 
 export const COMPARE_DATA = [
@@ -97,7 +76,7 @@ export const INITIAL_GOALS: Goal[] = [
     id: 1,
     domain: "Мобильность",
     color: "#3b82f6",
-    progress: 60,
+    gasScore: 1,
     text: "Пройти без остановки 500 м к концу 8-й недели реабилитации",
     specific: "Самостоятельная ходьба без вспомогательных средств",
     measurable: "500 м за одну сессию без отдыха",
@@ -109,7 +88,7 @@ export const INITIAL_GOALS: Goal[] = [
     id: 2,
     domain: "Самообслуживание",
     color: "#8b5cf6",
-    progress: 35,
+    gasScore: -1,
     text: "Одеваться полностью самостоятельно за ≤10 мин через 4 недели",
     specific: "Полное одевание без посторонней помощи",
     measurable: "Время выполнения ≤10 минут",
@@ -121,7 +100,7 @@ export const INITIAL_GOALS: Goal[] = [
     id: 3,
     domain: "Когниция",
     color: "#f59e0b",
-    progress: 45,
+    gasScore: 0,
     text: "Удерживать внимание на задаче ≥20 мин через 6 недель",
     specific: "Выполнение когнитивных упражнений без перерыва",
     measurable: "20 минут непрерывной концентрации",

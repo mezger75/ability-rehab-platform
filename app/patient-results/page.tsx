@@ -1,0 +1,890 @@
+"use client";
+import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
+
+// ─── Patient Results Page ──────────────────────────────────────────────────────
+
+interface Goal {
+  id: number;
+  domain: string;
+  color: string;
+  progress: number;
+  text: string;
+  description?: string;
+  specific?: string;
+  measurable?: string;
+  achievable?: string;
+  relevant?: string;
+  timeBound?: string;
+}
+
+interface ChatMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
+// Mock SMART goals for patient
+const PATIENT_GOALS: Goal[] = [
+  {
+    id: 1,
+    domain: "Мобильность",
+    color: "#3b82f6",
+    progress: 60,
+    text: "Пройти 500 м без остановки",
+    description: "Восстановление двигательной активности и выносливости",
+    specific: "Самостоятельная ходьба без вспомогательных средств",
+    measurable: "500 м за одну сессию без отдыха",
+    achievable: "Текущий результат 300 м; плановый прирост 50 м/нед",
+    relevant: "Необходимо для самостоятельного выхода из дома",
+    timeBound: "8 недель (к 14-й неделе от начала реабилитации)",
+  },
+  {
+    id: 2,
+    domain: "Самообслуживание",
+    color: "#8b5cf6",
+    progress: 35,
+    text: "Одеваться самостоятельно за 10 мин",
+    description: "Восстановление навыков самообслуживания и независимости",
+    specific: "Полное одевание без посторонней помощи",
+    measurable: "Время выполнения ≤10 минут",
+    achievable: "Сейчас занимает 25 мин с частичной помощью",
+    relevant: "Восстановление бытовой независимости",
+    timeBound: "4 недели",
+  },
+  {
+    id: 3,
+    domain: "Когниция",
+    color: "#f59e0b",
+    progress: 45,
+    text: "Концентрация внимания ≥20 мин",
+    description: "Улучшение когнитивных функций для возврата к работе",
+    specific: "Выполнение когнитивных упражнений без перерыва",
+    measurable: "20 минут непрерывной концентрации",
+    achievable: "Текущий ресурс внимания 5–7 мин, прирост 2-3 мин/нед",
+    relevant: "Необходимо для возврата к профессиональной деятельности",
+    timeBound: "6 недель",
+  },
+];
+
+// Mock initial AI messages
+const INITIAL_MESSAGES: ChatMessage[] = [
+  {
+    role: "assistant",
+    content:
+      "Привет! 👋 Я твой персональный AI-ассистент по реабилитации.\n\nМою работу вижу в том, чтобы помочь тебе:\n✓ Отслеживать прогресс по целям\n✓ Добавлять новые SMART-цели\n✓ Получать рекомендации\n\nКак у тебя дела? Хочешь добавить новую цель?",
+  },
+];
+
+export default function PatientResults() {
+  const router = useRouter();
+  const [messages, setMessages] = useState<ChatMessage[]>(INITIAL_MESSAGES);
+  const [inputValue, setInputValue] = useState("");
+  const [goals, setGoals] = useState<Goal[]>(PATIENT_GOALS);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
+
+  // Scroll to bottom when new messages arrive
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const handleSendMessage = async () => {
+    if (!inputValue.trim()) return;
+
+    // Add user message
+    const userMessage = inputValue.trim();
+    setInputValue("");
+    setMessages((prev) => [...prev, { role: "user", content: userMessage }]);
+    setIsLoading(true);
+
+    // Simulate AI response (mock)
+    setTimeout(() => {
+      let assistantResponse = "";
+
+      if (
+        userMessage.toLowerCase().includes("новая цель") ||
+        userMessage.toLowerCase().includes("добавить")
+      ) {
+        assistantResponse = `Отлично! 🎯 Давай сформулируем новую SMART-цель.\n\nРасскажи мне:\n• Какой домен её развивает? (Мобильность, Самообслуживание, Когниция, Взаимодействие и т.д.)\n• Что конкретно хочешь достичь?\n• За какой период?`;
+      } else if (
+        userMessage.toLowerCase().includes("как дела") ||
+        userMessage.toLowerCase().includes("прогресс")
+      ) {
+        assistantResponse = `По твоим текущим целям:\n\n📊 Мобильность: 60% ✓\n📊 Самообслуживание: 35% \n📊 Когниция: 45% \n\nТы молодец! Продолжай в том же духе! 💪`;
+      } else {
+        assistantResponse =
+          "Спасибо за сообщение! Я помогу тебе с реабилитацией. Если хочешь добавить новую цель, скажи об этом. Если есть вопросы о текущем прогрессе, спрашивай!";
+      }
+
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: assistantResponse },
+      ]);
+      setIsLoading(false);
+    }, 500);
+  };
+
+  const handleAddGoal = () => {
+    // This would be triggered from chat interactions
+    // For now, it's a placeholder
+  };
+
+  const handleBack = () => {
+    router.push("/");
+  };
+
+  const renderGoalDiagram = (goal: Goal) => {
+    const data = [
+      { name: "Progress", value: goal.progress },
+      { name: "Remaining", value: 100 - goal.progress },
+    ];
+
+    return (
+      <div
+        key={goal.id}
+        onClick={() => setSelectedGoal(goal)}
+        style={{
+          display: "flex",
+          flexDirection: "column" as const,
+          alignItems: "center",
+          gap: 6,
+          cursor: "pointer",
+          padding: 8,
+          borderRadius: 12,
+          transition: "background 0.2s",
+        }}
+        onMouseEnter={(e) => {
+          (e.currentTarget as HTMLElement).style.background = "#f8fafc";
+        }}
+        onMouseLeave={(e) => {
+          (e.currentTarget as HTMLElement).style.background = "transparent";
+        }}
+      >
+        <div style={{ position: "relative", width: "100%", height: 120 }}>
+          <ResponsiveContainer width="100%" height={120}>
+            <PieChart>
+              <Pie
+                data={data}
+                cx="50%"
+                cy="50%"
+                innerRadius={28}
+                outerRadius={45}
+                fill="#8884d8"
+                dataKey="value"
+                startAngle={90}
+                endAngle={-270}
+              >
+                <Cell fill={goal.color} />
+                <Cell fill="#f0f4f8" />
+              </Pie>
+            </PieChart>
+          </ResponsiveContainer>
+          <div
+            style={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              textAlign: "center",
+              pointerEvents: "none",
+            }}
+          >
+            <div style={{ fontSize: 18, fontWeight: 700, color: "#1e293b" }}>
+              {goal.progress}%
+            </div>
+            <div style={{ fontSize: 8, color: "#94a3b8" }}>прогресс</div>
+          </div>
+        </div>
+        <div style={{ textAlign: "center" }}>
+          <div
+            style={{
+              fontSize: 13,
+              fontWeight: 600,
+              color: "#1e293b",
+              marginBottom: 2,
+            }}
+          >
+            {goal.domain}
+          </div>
+          <div
+            style={{
+              fontSize: 12,
+              color: "#64748b",
+              lineHeight: 1.4,
+              maxWidth: 120,
+            }}
+          >
+            {goal.text}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Responsive layout: mobile-first, desktop has 2-column layout
+  const isMobileLayout = true; // You could use a media query hook here
+
+  return (
+    <div style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
+      <div
+        style={{
+          minHeight: "100vh",
+          background: "#f8fafc",
+          display: "flex",
+          flexDirection: "column" as const,
+        }}
+      >
+        {/* Header */}
+        <div
+          style={{
+            background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
+            color: "white",
+            padding: "16px",
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            borderBottom: "1px solid #2563eb",
+          }}
+        >
+          <button
+            onClick={handleBack}
+            style={{
+              background: "rgba(255,255,255,0.2)",
+              border: "none",
+              color: "white",
+              borderRadius: 8,
+              width: 32,
+              height: 32,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+              fontSize: 18,
+            }}
+          >
+            ←
+          </button>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 14, opacity: 0.9 }}>Ваш прогресс</div>
+            <div style={{ fontSize: 18, fontWeight: 600 }}>
+              📊 Мой путь реабилитации
+            </div>
+          </div>
+          <button
+            onClick={() => setIsChatOpen(true)}
+            style={{
+              background: "rgba(255,255,255,0.2)",
+              border: "none",
+              color: "white",
+              borderRadius: 8,
+              width: 40,
+              height: 40,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+              fontSize: 20,
+              transition: "background 0.2s",
+            }}
+            onMouseEnter={(e) =>
+              ((e.target as HTMLButtonElement).style.background =
+                "rgba(255,255,255,0.3)")
+            }
+            onMouseLeave={(e) =>
+              ((e.target as HTMLButtonElement).style.background =
+                "rgba(255,255,255,0.2)")
+            }
+          >
+            💬
+          </button>
+        </div>
+
+        {/* Main Content - Mobile First with Desktop Adaptations */}
+        <div
+          style={{
+            flex: 1,
+            display: "flex",
+            flexDirection: "column" as const,
+            overflow: "hidden",
+            maxWidth: "100%",
+          }}
+          className="desktop-layout"
+        >
+          {/* Goals Section - Full Screen */}
+          <div
+            style={{
+              flex: 1,
+              padding: "16px",
+              overflowY: "auto",
+              display: "flex",
+              flexDirection: "column" as const,
+            }}
+            className="goals-section"
+          >
+            {/* Summary Card */}
+            <div
+              style={{
+                background: "white",
+                borderRadius: 16,
+                padding: 16,
+                marginBottom: 16,
+                border: "1px solid #e2e8f0",
+                flex: "0 0 auto",
+              }}
+            >
+              <div style={{ fontSize: 13, color: "#64748b", marginBottom: 8 }}>
+                📋 Активные цели реабилитации
+              </div>
+              <div style={{ fontSize: 15, fontWeight: 600, color: "#1e293b" }}>
+                {goals.length} целей в разработке
+              </div>
+              <div
+                style={{
+                  fontSize: 12,
+                  color: "#94a3b8",
+                  marginTop: 4,
+                  lineHeight: 1.6,
+                }}
+              >
+                Средний прогресс:{" "}
+                <span style={{ color: "#3b82f6", fontWeight: 600 }}>
+                  {Math.round(
+                    goals.reduce((a, b) => a + b.progress, 0) / goals.length
+                  )}
+                  %
+                </span>
+              </div>
+            </div>
+
+            {/* Goals Diagrams - Responsive Grid */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(3, 1fr)",
+                gap: 8,
+                marginBottom: 16,
+              }}
+              className="goals-grid"
+            >
+              {goals.map((goal) => renderGoalDiagram(goal))}
+            </div>
+
+            {/* Exercises Button */}
+            <button
+              onClick={() => router.push("/exercises")}
+              style={{
+                background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                color: "white",
+                border: "none",
+                borderRadius: 14,
+                padding: "14px 16px",
+                fontSize: 15,
+                fontWeight: 600,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
+                transition: "transform 0.2s, box-shadow 0.2s",
+              }}
+              onMouseDown={(e) => {
+                (e.target as HTMLButtonElement).style.transform = "scale(0.98)";
+              }}
+              onMouseUp={(e) => {
+                (e.target as HTMLButtonElement).style.transform = "scale(1)";
+              }}
+            >
+              💪 Упражнения ЛФК
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Goal Details Modal */}
+      {selectedGoal && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "rgba(0, 0, 0, 0.5)",
+            zIndex: 1000,
+            display: "flex",
+            flexDirection: "column" as const,
+            animation: "fadeIn 0.2s ease-out",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "16px",
+          }}
+          onClick={() => setSelectedGoal(null)}
+        >
+          <div
+            style={{
+              background: "white",
+              borderRadius: 20,
+              padding: "24px",
+              maxWidth: 500,
+              maxHeight: "85vh",
+              overflowY: "auto",
+              animation: "slideUp 0.3s ease-out",
+              boxShadow: "0 10px 40px rgba(0,0,0,0.2)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close Button */}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: 20,
+              }}
+            >
+              <div
+                style={{
+                  display: "inline-block",
+                  background: selectedGoal.color + "20",
+                  padding: "6px 12px",
+                  borderRadius: 8,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: selectedGoal.color,
+                }}
+              >
+                {selectedGoal.domain}
+              </div>
+              <button
+                onClick={() => setSelectedGoal(null)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  fontSize: 24,
+                  cursor: "pointer",
+                  color: "#94a3b8",
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Progress */}
+            <div style={{ marginBottom: 24 }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "baseline",
+                  gap: 8,
+                  marginBottom: 8,
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: 28,
+                    fontWeight: 700,
+                    color: selectedGoal.color,
+                  }}
+                >
+                  {selectedGoal.progress}%
+                </div>
+                <div style={{ fontSize: 14, color: "#94a3b8" }}>завершено</div>
+              </div>
+              <div
+                style={{
+                  width: "100%",
+                  height: 8,
+                  background: "#f1f5f9",
+                  borderRadius: 99,
+                  overflow: "hidden",
+                }}
+              >
+                <div
+                  style={{
+                    width: `${selectedGoal.progress}%`,
+                    height: "100%",
+                    background: selectedGoal.color,
+                    borderRadius: 99,
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Goal Text */}
+            <h2
+              style={{
+                fontSize: 18,
+                fontWeight: 600,
+                color: "#1e293b",
+                marginBottom: 16,
+              }}
+            >
+              {selectedGoal.text}
+            </h2>
+
+            <p
+              style={{
+                fontSize: 14,
+                color: "#64748b",
+                marginBottom: 24,
+                lineHeight: 1.6,
+              }}
+            >
+              {selectedGoal.description}
+            </p>
+
+            {/* SMART Criteria */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {[
+                {
+                  label: "Specific (Конкретная)",
+                  value: selectedGoal.specific,
+                },
+                {
+                  label: "Measurable (Измеримая)",
+                  value: selectedGoal.measurable,
+                },
+                {
+                  label: "Achievable (Достижимая)",
+                  value: selectedGoal.achievable,
+                },
+                {
+                  label: "Relevant (Актуальная)",
+                  value: selectedGoal.relevant,
+                },
+                {
+                  label: "Time-bound (Ограниченная сроком)",
+                  value: selectedGoal.timeBound,
+                },
+              ].map((item) => (
+                <div
+                  key={item.label}
+                  style={{
+                    background: "#f8fafc",
+                    borderRadius: 12,
+                    padding: 12,
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: "#3b82f6",
+                      marginBottom: 4,
+                    }}
+                  >
+                    ✓ {item.label}
+                  </div>
+                  <div
+                    style={{ fontSize: 13, color: "#475569", lineHeight: 1.5 }}
+                  >
+                    {item.value}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Close Button */}
+            <button
+              onClick={() => setSelectedGoal(null)}
+              style={{
+                width: "100%",
+                marginTop: 24,
+                background: selectedGoal.color,
+                color: "white",
+                border: "none",
+                borderRadius: 12,
+                padding: "12px 16px",
+                fontSize: 14,
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
+              Закрыть
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Chat Modal */}
+      {isChatOpen && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "rgba(0, 0, 0, 0.5)",
+            zIndex: 1000,
+            display: "flex",
+            flexDirection: "column" as const,
+            animation: "fadeIn 0.2s ease-out",
+          }}
+          onClick={() => setIsChatOpen(false)}
+        >
+          {/* Chat Modal Content */}
+          <div
+            style={{
+              position: "fixed",
+              bottom: 0,
+              left: 0,
+              right: 0,
+              background: "white",
+              borderTopLeftRadius: 24,
+              borderTopRightRadius: 24,
+              display: "flex",
+              flexDirection: "column" as const,
+              maxHeight: "85vh",
+              minHeight: "60vh",
+              zIndex: 1001,
+              boxShadow: "0 -10px 40px rgba(0,0,0,0.1)",
+              animation: "slideUp 0.3s ease-out",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div
+              style={{
+                padding: "16px",
+                borderBottom: "1px solid #e2e8f0",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                flex: "0 0 auto",
+              }}
+            >
+              <div>
+                <div style={{ fontSize: 13, color: "#64748b" }}>
+                  AI Ассистент
+                </div>
+                <div
+                  style={{ fontSize: 15, fontWeight: 600, color: "#1e293b" }}
+                >
+                  🤖 Помощник по реабилитации
+                </div>
+              </div>
+              <button
+                onClick={() => setIsChatOpen(false)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  fontSize: 24,
+                  cursor: "pointer",
+                  color: "#94a3b8",
+                  padding: "4px 8px",
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Messages Container */}
+            <div
+              style={{
+                flex: 1,
+                overflowY: "auto",
+                padding: "16px",
+                display: "flex",
+                flexDirection: "column" as const,
+                gap: 12,
+              }}
+            >
+              {messages.map((msg, idx) => (
+                <div
+                  key={idx}
+                  style={{
+                    display: "flex",
+                    justifyContent:
+                      msg.role === "user" ? "flex-end" : "flex-start",
+                    gap: 8,
+                  }}
+                >
+                  <div
+                    style={{
+                      maxWidth: "80%",
+                      padding: "10px 14px",
+                      borderRadius: 14,
+                      background: msg.role === "user" ? "#3b82f6" : "#f1f5f9",
+                      color: msg.role === "user" ? "white" : "#1e293b",
+                      fontSize: 14,
+                      lineHeight: 1.5,
+                      whiteSpace: "pre-wrap",
+                      wordBreak: "break-word" as const,
+                    }}
+                  >
+                    {msg.content}
+                  </div>
+                </div>
+              ))}
+              {isLoading && (
+                <div style={{ display: "flex", gap: 4 }}>
+                  <div
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: "50%",
+                      background: "#cbd5e1",
+                      animation: "pulse 1.4s ease-in-out infinite",
+                    }}
+                  />
+                  <div
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: "50%",
+                      background: "#cbd5e1",
+                      animation: "pulse 1.4s ease-in-out 0.2s infinite",
+                    }}
+                  />
+                  <div
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: "50%",
+                      background: "#cbd5e1",
+                      animation: "pulse 1.4s ease-in-out 0.4s infinite",
+                    }}
+                  />
+                </div>
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* Input Area */}
+            <div
+              style={{
+                flex: "0 0 auto",
+                padding: "12px 16px 24px",
+                borderTop: "1px solid #e2e8f0",
+                background: "white",
+              }}
+            >
+              <div style={{ display: "flex", gap: 8 }}>
+                <input
+                  type="text"
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSendMessage();
+                    }
+                  }}
+                  placeholder="Напиши сообщение..."
+                  autoFocus
+                  style={{
+                    flex: 1,
+                    border: "1px solid #e2e8f0",
+                    borderRadius: 12,
+                    padding: "10px 14px",
+                    fontSize: 14,
+                    outline: "none",
+                    background: "#f8fafc",
+                  }}
+                />
+                <button
+                  onClick={handleSendMessage}
+                  disabled={!inputValue.trim() || isLoading}
+                  style={{
+                    background:
+                      inputValue.trim() && !isLoading ? "#3b82f6" : "#cbd5e1",
+                    color: "white",
+                    border: "none",
+                    borderRadius: 12,
+                    width: 44,
+                    height: 44,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    cursor:
+                      inputValue.trim() && !isLoading ? "pointer" : "default",
+                    fontSize: 18,
+                    transition: "background 0.2s",
+                  }}
+                >
+                  ↗️
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Styles for animations and responsive design */}
+      <style>{`
+        @keyframes pulse {
+          0%, 60%, 100% {
+            opacity: 0.3;
+          }
+          30% {
+            opacity: 1;
+          }
+        }
+
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+
+        @keyframes slideUp {
+          from {
+            transform: translateY(100%);
+          }
+          to {
+            transform: translateY(0);
+          }
+        }
+
+        /* Desktop layout: side-by-side */
+        @media (min-width: 768px) {
+          .desktop-layout {
+            flex-direction: row !important;
+            overflow: visible !important;
+          }
+
+          .goals-section {
+            flex: "0 0 45%" !important;
+            max-height: 100% !important;
+            border-right: 1px solid #e2e8f0;
+            padding: 24px !important;
+            overflow-y: auto;
+          }
+
+          .chat-section {
+            flex: 1 !important;
+            min-height: auto !important;
+            border-top: none !important;
+          }
+
+          .goals-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 16px !important;
+          }
+
+          .input-area {
+            padding: 16px 24px 24px !important;
+          }
+        }
+
+        /* Large desktop */
+        @media (min-width: 1024px) {
+          .goals-section {
+            flex: "0 0 40%" !important;
+          }
+
+          .goals-grid {
+            grid-template-columns: 1fr !important;
+          }
+        }
+      `}</style>
+    </div>
+  );
+}
