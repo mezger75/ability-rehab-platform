@@ -3,7 +3,7 @@ import { supabase } from "@/lib/supabase";
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
-  const { patient_id, answers } = body;
+  const { patient_name, answers } = body;
 
   // Считаем total_score
   const total_score = Object.values(answers as Record<string, number>).reduce(
@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
   const { data, error } = await supabase
     .from("survey_responses")
     .insert({
-      patient_id,
+      patient_name,
       answers,
       total_score,
       domain_scores,
@@ -40,13 +40,16 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const patient_id = searchParams.get("patient_id");
+  const patient_name = searchParams.get("patient_name");
 
-  const { data, error } = await supabase
-    .from("survey_responses")
-    .select("*")
-    .eq("patient_id", patient_id)
-    .order("created_at", { ascending: true });
+  let query = supabase.from("survey_responses").select("*");
+
+  // If patient_name is provided, filter by it
+  if (patient_name) {
+    query = query.eq("patient_name", patient_name);
+  }
+
+  const { data, error } = await query.order("created_at", { ascending: false });
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

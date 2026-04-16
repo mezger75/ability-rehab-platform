@@ -56,15 +56,6 @@ export const PROGRESS_DATA = [
   },
 ];
 
-export const RADAR_DATA = [
-  { domain: "Когниция", current: 4.2, start: 2.3 },
-  { domain: "Мобильность", current: 4.5, start: 2.5 },
-  { domain: "Самообслуж.", current: 3.8, start: 2.1 },
-  { domain: "Взаимодейств.", current: 3.2, start: 2.0 },
-  { domain: "Жизнедеят.", current: 4.0, start: 2.4 },
-  { domain: "Участие", current: 4.1, start: 2.5 },
-];
-
 export const COMPARE_DATA = [
   { name: "Волков А.", value: 2.3 },
   { name: "Соколова М.", value: 3.1 },
