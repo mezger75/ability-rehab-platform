@@ -121,16 +121,6 @@ export default function PatientQuestionnaire() {
           if (!domainMap[q.domain]) domainMap[q.domain] = [];
           domainMap[q.domain].push(newAnswers[q.id] || 1);
         });
-        const scores = Object.entries(domainMap).map(([domain, vals]) => ({
-          domain,
-          score:
-            Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) /
-            10,
-        }));
-        const total =
-          Math.round(
-            (scores.reduce((a, b) => a + b.score, 0) / scores.length) * 10
-          ) / 10;
 
         // Send data to API
         try {
@@ -154,10 +144,10 @@ export default function PatientQuestionnaire() {
 
         setPhase("done");
 
-        // Redirect to patient results after 3 seconds
+        // Redirect to patient results after 2 seconds
         setTimeout(() => {
           router.push("/patient-results");
-        }, 3000);
+        }, 2000);
       }
     }, 280);
   };
