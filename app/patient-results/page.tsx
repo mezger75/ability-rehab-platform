@@ -30,7 +30,7 @@ const PATIENT_GOALS: Goal[] = [
     id: 1,
     domain: "Мобильность",
     color: "#3b82f6",
-    progress: 60,
+    progress: 0,
     text: "Пройти 500 м без остановки",
     description: "Восстановление двигательной активности и выносливости",
     specific: "Самостоятельная ходьба без вспомогательных средств",
@@ -43,7 +43,7 @@ const PATIENT_GOALS: Goal[] = [
     id: 2,
     domain: "Самообслуживание",
     color: "#8b5cf6",
-    progress: 35,
+    progress: 0,
     text: "Одеваться самостоятельно за 10 мин",
     description: "Восстановление навыков самообслуживания и независимости",
     specific: "Полное одевание без посторонней помощи",
@@ -56,7 +56,7 @@ const PATIENT_GOALS: Goal[] = [
     id: 3,
     domain: "Познание и коммуникация",
     color: "#f59e0b",
-    progress: 45,
+    progress: 0,
     text: "Концентрация внимания ≥20 мин",
     description: "Улучшение когнитивных функций для возврата к работе",
     specific: "Выполнение когнитивных упражнений без перерыва",
@@ -291,6 +291,11 @@ export default function PatientResults() {
           >
             {goal.text}
           </div>
+          {goal.timeBound && (
+            <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 4 }}>
+              🕐 {goal.timeBound}
+            </div>
+          )}
         </div>
       </div>
     );
