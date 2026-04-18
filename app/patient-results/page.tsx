@@ -781,11 +781,29 @@ export default function PatientResults() {
                       color: msg.role === "user" ? "white" : "#1e293b",
                       fontSize: 14,
                       lineHeight: 1.5,
-                      whiteSpace: "pre-wrap",
-                      wordBreak: "break-word" as const,
                     }}
                   >
-                    {msg.content}
+                    <div
+                      style={{
+                        whiteSpace: "pre-wrap",
+                        wordBreak: "break-word",
+                      }}
+                      dangerouslySetInnerHTML={{
+                        __html: msg.content
+                          .replace(
+                            /### (.*?)(\n|$)/g,
+                            "<strong>$1</strong><br/>"
+                          )
+                          .replace(
+                            /## (.*?)(\n|$)/g,
+                            "<strong>$1</strong><br/>"
+                          )
+                          .replace(/# (.*?)(\n|$)/g, "<strong>$1</strong><br/>")
+                          .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+                          .replace(/\*(.*?)\*/g, "<em>$1</em>")
+                          .replace(/\n/g, "<br/>"),
+                      }}
+                    />
                   </div>
                 </div>
               ))}
@@ -833,14 +851,7 @@ export default function PatientResults() {
               }}
             >
               {/* Suggestions */}
-              <div
-                style={{
-                  display: "flex",
-                  gap: 6,
-                  marginBottom: 10,
-                  flexWrap: "wrap",
-                }}
-              >
+              <div className="patient-suggestions">
                 {suggestions.map((s, i) => (
                   <button
                     key={i}
@@ -853,6 +864,7 @@ export default function PatientResults() {
                       padding: "5px 12px",
                       borderRadius: 99,
                       cursor: "pointer",
+                      whiteSpace: "nowrap",
                     }}
                   >
                     {s}
@@ -967,6 +979,25 @@ export default function PatientResults() {
 
           .input-area {
             padding: 16px 24px 24px !important;
+          }
+        }
+
+        /* Mobile: horizontal scroll for suggestions */
+        .patient-suggestions {
+          display: flex;
+          gap: 6px;
+          margin-bottom: 10px;
+          flex-wrap: wrap;
+        }
+        @media (max-width: 767px) {
+          .patient-suggestions {
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+          }
+          .patient-suggestions::-webkit-scrollbar {
+            display: none;
           }
         }
 

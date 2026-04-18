@@ -783,7 +783,10 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
               <div
                 className="tab-content"
                 style={{
-                  padding: 24,
+                  paddingTop: 12,
+                  paddingBottom: 12,
+                  paddingLeft: 24,
+                  paddingRight: 24,
                   flex: 1,
                   display: "flex",
                   flexDirection: "column",
