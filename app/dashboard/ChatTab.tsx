@@ -64,7 +64,7 @@ export function ChatTab({
         <p
           style={{ fontSize: 14, fontWeight: 500, color: "#1e293b", margin: 0 }}
         >
-          ИИ-ассистент: формулирование SMART-целей
+          AI-ассистент: формулирование SMART-целей
         </p>
       </div>
       <div

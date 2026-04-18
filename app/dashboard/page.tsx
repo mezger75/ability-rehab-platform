@@ -64,8 +64,8 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
     if (patient) {
       const domainScores = patient.domainScores;
       const initialMessage = domainScores
-        ? `Добро пожаловать! Я ИИ-ассистент по реабилитации.\n\nПомогу сформулировать персонализированные SMART-цели для пациента ${patient.name}.\n\nТекущие индексы WHODAS 2.0:\nПознание и коммуникация ${domainScores.cognition.toFixed(1)} · Мобильность ${domainScores.mobility.toFixed(1)} · Самообслуживание ${domainScores.self_care.toFixed(1)} · Межличностные взаимодействия ${domainScores.interaction.toFixed(1)} · Повседневная деятельность ${domainScores.life_activities.toFixed(1)} · Жизнь в обществе ${domainScores.participation.toFixed(1)}\n\nС чего начнём?`
-        : `Добро пожаловать! Я ИИ-ассистент по реабилитации.\n\nПомогу сформулировать персонализированные SMART-цели для пациента ${patient.name}.\n\nС чего начнём?`;
+        ? `Добро пожаловать! Я AI-ассистент по реабилитации.\n\nПомогу сформулировать персонализированные SMART-цели для пациента ${patient.name}.\n\nТекущие индексы WHODAS 2.0:\nПознание и коммуникация ${domainScores.cognition.toFixed(1)} · Мобильность ${domainScores.mobility.toFixed(1)} · Самообслуживание ${domainScores.self_care.toFixed(1)} · Межличностные взаимодействия ${domainScores.interaction.toFixed(1)} · Повседневная деятельность ${domainScores.life_activities.toFixed(1)} · Жизнь в обществе ${domainScores.participation.toFixed(1)}\n\nС чего начнём?`
+        : `Добро пожаловать! Я AI-ассистент по реабилитации.\n\nПомогу сформулировать персонализированные SMART-цели для пациента ${patient.name}.\n\nС чего начнём?`;
       setMsgs([{ role: "assistant", content: initialMessage }]);
     }
   }, [patient]);
@@ -222,7 +222,7 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
     { id: "overview", label: "Обзор" },
     { id: "progress", label: "Прогресс" },
     { id: "goals", label: `Цели (${goals.length})` },
-    { id: "chat", label: "ИИ-чат" },
+    { id: "chat", label: "AI-чат" },
   ];
 
   return (
