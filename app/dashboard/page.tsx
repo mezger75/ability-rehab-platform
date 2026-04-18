@@ -227,7 +227,7 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
   return (
     <div
       style={{
-        minHeight: "100vh",
+        height: "100vh",
         background: "#f8fafc",
         display: "flex",
         flexDirection: "column",
@@ -312,10 +312,11 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
             background: "white",
             borderRight: "1px solid #e2e8f0",
             flexShrink: 0,
-            overflowY: "auto",
+            display: "flex",
+            flexDirection: "column",
           }}
         >
-          <div style={{ padding: 16 }}>
+          <div style={{ padding: "16px 16px 12px" }}>
             <p
               style={{
                 fontSize: 11,
@@ -323,11 +324,19 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
                 color: "#94a3b8",
                 textTransform: "uppercase",
                 letterSpacing: "0.06em",
-                marginBottom: 10,
+                margin: 0,
               }}
             >
               Пациенты
             </p>
+          </div>
+          <div
+            style={{
+              flex: 1,
+              overflowY: "auto",
+              padding: "0 16px 16px",
+            }}
+          >
             <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
               {patients.map((p) => (
                 <button
@@ -392,9 +401,9 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
         <main
           style={{
             flex: 1,
-            overflowY: "auto",
             display: "flex",
             flexDirection: "column",
+            overflow: "hidden",
           }}
         >
           {!patient ? (
@@ -549,7 +558,15 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
                 </div>
               </div>
 
-              <div style={{ padding: 24, flex: 1 }}>
+              <div
+                style={{
+                  padding: 24,
+                  flex: 1,
+                  display: "flex",
+                  flexDirection: "column",
+                  minHeight: 0,
+                }}
+              >
                 {tab === "overview" && (
                   <OverviewTab
                     goals={goals}

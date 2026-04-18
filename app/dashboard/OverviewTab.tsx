@@ -32,12 +32,20 @@ export function OverviewTab({
     );
   }
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 20,
+        height: "100%",
+      }}
+    >
       <div
         style={{
           display: "grid",
           gridTemplateColumns: "repeat(4,1fr)",
           gap: 14,
+          flexShrink: 0,
         }}
       >
         {[
@@ -102,7 +110,14 @@ export function OverviewTab({
           </div>
         ))}
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: 20,
+          flexShrink: 0,
+        }}
+      >
         <WHODASProfileChart patient={patient} />
         <GoalAchievementStatus
           goals={goals}
