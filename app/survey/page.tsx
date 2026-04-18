@@ -16,12 +16,12 @@ function SurveyWrapper({ children }: { children: React.ReactNode }) {
 const QUESTIONS = [
   {
     id: "D1_1",
-    domain: "Когниция",
+    domain: "Познание и коммуникация",
     text: "Насколько трудно Вам было сосредоточиться на каком-либо занятии в течение 10 минут?",
   },
   {
     id: "D1_2",
-    domain: "Когниция",
+    domain: "Познание и коммуникация",
     text: "Насколько трудно Вам было освоить новую задачу, например, запомнить дорогу в незнакомое место?",
   },
   {
@@ -46,32 +46,32 @@ const QUESTIONS = [
   },
   {
     id: "D4_1",
-    domain: "Взаимодействие",
+    domain: "Межличностные взаимодействия",
     text: "Насколько трудно Вам было взаимодействовать с незнакомыми людьми?",
   },
   {
     id: "D4_2",
-    domain: "Взаимодействие",
+    domain: "Межличностные взаимодействия",
     text: "Насколько трудно Вам было поддерживать дружеские отношения?",
   },
   {
     id: "D5_1",
-    domain: "Жизнедеятельность",
+    domain: "Повседневная деятельность",
     text: "Насколько трудно Вам было справляться с Вашими домашними делами и обязанностями?",
   },
   {
     id: "D5_2",
-    domain: "Жизнедеятельность",
+    domain: "Повседневная деятельность",
     text: "Насколько трудно Вам было выполнять Вашу основную работу или учёбу (повседневные дела)?",
   },
   {
     id: "D6_1",
-    domain: "Участие",
+    domain: "Жизнь в обществе",
     text: "Насколько проблематично для Вас было участвовать в общественных мероприятиях (например, праздниках, встречах) наравне с другими людьми?",
   },
   {
     id: "D6_2",
-    domain: "Участие",
+    domain: "Жизнь в обществе",
     text: "Насколько сильно Ваши проблемы со здоровьем выбивали Вас из колеи или угнетали эмоционально?",
   },
 ];
@@ -103,6 +103,7 @@ export default function PatientQuestionnaire() {
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [name, setName] = useState("");
   const [selected, setSelected] = useState<number | null>(null);
+  const [nameError, setNameError] = useState("");
 
   const progress = Math.round((step / QUESTIONS.length) * 100);
   const q = QUESTIONS[step];
@@ -154,6 +155,24 @@ export default function PatientQuestionnaire() {
 
   const handleBack = () => {
     router.push("/");
+  };
+
+  const handleStartSurvey = () => {
+    const trimmedName = name.trim();
+    if (!trimmedName) {
+      setNameError("Пожалуйста, введите ваше имя");
+      return;
+    }
+    if (trimmedName.length < 2) {
+      setNameError("Имя должно содержать минимум 2 символа");
+      return;
+    }
+    if (/\d/.test(trimmedName)) {
+      setNameError("Имя не должно содержать цифры");
+      return;
+    }
+    setNameError("");
+    setPhase("questions");
   };
 
   const s: Record<string, React.CSSProperties> = {
@@ -257,12 +276,12 @@ export default function PatientQuestionnaire() {
               </div>
               <div style={{ marginBottom: 16 }}>
                 {[
-                  "Когнитивные функции",
+                  "Познание и коммуникация",
                   "Мобильность",
                   "Самообслуживание",
-                  "Взаимодействие",
-                  "Жизнедеятельность",
-                  "Участие в жизни общества",
+                  "Межличностные взаимодействия",
+                  "Повседневная деятельность",
+                  "Жизнь в обществе",
                 ].map((d, i) => (
                   <div
                     key={i}
@@ -305,24 +324,51 @@ export default function PatientQuestionnaire() {
                 >
                   Ваше имя
                 </label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Введите имя"
-                  style={{
-                    width: "100%",
-                    border: "1px solid #e2e8f0",
-                    borderRadius: 10,
-                    padding: "10px 14px",
-                    fontSize: 15,
-                    boxSizing: "border-box",
-                    outline: "none",
-                  }}
-                />
+                <div style={{ position: "relative" }}>
+                  {nameError && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        bottom: "100%",
+                        left: 0,
+                        right: 0,
+                        marginBottom: 6,
+                        padding: "6px 10px",
+                        background: "#fef2f2",
+                        border: "1px solid #fecaca",
+                        borderRadius: 8,
+                        color: "#dc2626",
+                        fontSize: 12,
+                        zIndex: 10,
+                      }}
+                    >
+                      {nameError}
+                    </div>
+                  )}
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => {
+                      setName(e.target.value);
+                      if (nameError) setNameError("");
+                    }}
+                    placeholder="Введите имя"
+                    maxLength={50}
+                    style={{
+                      width: "100%",
+                      border: `1px solid ${nameError ? "#ef4444" : "#e2e8f0"}`,
+                      borderRadius: 10,
+                      padding: "10px 14px",
+                      fontSize: 15,
+                      boxSizing: "border-box",
+                      outline: "none",
+                    }}
+                    required
+                  />
+                </div>
               </div>
               <button
-                onClick={() => setPhase("questions")}
+                onClick={handleStartSurvey}
                 style={{
                   width: "100%",
                   background: "#2563eb",

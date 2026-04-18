@@ -1,10 +1,13 @@
 "use client";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import ConsentModal from "./ConsentModal";
 
 // ─── Landing Page ─────────────────────────────────────────────────────────────
 
 function LandingPage() {
   const router = useRouter();
+  const [showModal, setShowModal] = useState(false);
   return (
     <div
       style={{
@@ -66,7 +69,7 @@ function LandingPage() {
           textAlign: "center",
         }}
       >
-        RehabPlatform
+        Ability
       </h1>
       <p
         style={{
@@ -91,7 +94,7 @@ function LandingPage() {
         }}
       >
         <button
-          onClick={() => router.push("/survey")}
+          onClick={() => setShowModal(true)}
           style={{
             background: "#2563eb",
             color: "white",
@@ -148,6 +151,12 @@ function LandingPage() {
       <p style={{ fontSize: 12, color: "#94a3b8", marginTop: 32 }}>
         MVP · Демонстрационная версия
       </p>
+
+      <ConsentModal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        onConfirm={() => router.push("/survey")}
+      />
     </div>
   );
 }

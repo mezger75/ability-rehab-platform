@@ -8,15 +8,10 @@ export function DashboardSkeleton() {
         gap: 16,
         padding: 24,
       }}
+      className="skeleton-container"
     >
       {/* Stats cards skeleton */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(4, 1fr)",
-          gap: 14,
-        }}
-      >
+      <div className="skeleton-stats">
         {[1, 2, 3, 4].map((i) => (
           <div
             key={i}
@@ -59,7 +54,7 @@ export function DashboardSkeleton() {
       </div>
 
       {/* Charts skeleton */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+      <div className="skeleton-charts">
         {[1, 2].map((i) => (
           <div
             key={i}
@@ -109,6 +104,30 @@ export function DashboardSkeleton() {
       <style>{`
         @keyframes spin {
           to { transform: rotate(360deg); }
+        }
+        .skeleton-stats {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 14px;
+        }
+        .skeleton-charts {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 20px;
+        }
+        @media (max-width: 768px) {
+          .skeleton-container {
+            padding: 16px;
+            gap: 12px;
+          }
+          .skeleton-stats {
+            grid-template-columns: 1fr;
+            gap: 10px;
+          }
+          .skeleton-charts {
+            grid-template-columns: 1fr;
+            gap: 12px;
+          }
         }
       `}</style>
     </div>

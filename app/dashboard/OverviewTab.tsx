@@ -32,12 +32,44 @@ export function OverviewTab({
     );
   }
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 20,
+        height: "100%",
+      }}
+    >
+      <style>{`
+        @media (max-width: 768px) {
+          .overview-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 10px !important;
+          }
+          .overview-charts {
+            grid-template-columns: 1fr !important;
+            grid-template-rows: auto auto !important;
+          }
+          .overview-charts > :first-child {
+            order: 1;
+          }
+          .overview-charts > :last-child {
+            order: 2;
+          }
+          .overview-charts > * {
+            width: 100% !important;
+            max-width: 100% !important;
+            overflow-x: hidden !important;
+          }
+        }
+      `}</style>
       <div
+        className="overview-grid"
         style={{
           display: "grid",
           gridTemplateColumns: "repeat(4,1fr)",
           gap: 14,
+          flexShrink: 0,
         }}
       >
         {[
@@ -102,7 +134,15 @@ export function OverviewTab({
           </div>
         ))}
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+      <div
+        className="overview-charts"
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: 20,
+          flexShrink: 0,
+        }}
+      >
         <WHODASProfileChart patient={patient} />
         <GoalAchievementStatus
           goals={goals}

@@ -395,7 +395,6 @@ export async function POST(request: NextRequest) {
   );
 
   const data = await response.json();
-  console.log("OpenRouter response:", JSON.stringify(data).slice(0, 200));
 
   if (!data.choices?.[0]?.message?.content) {
     return NextResponse.json({ error: "No response from AI" }, { status: 500 });
@@ -413,6 +412,40 @@ export async function POST(request: NextRequest) {
   } catch {
     // Не JSON — обычный ответ
   }
+  // Извлечение подсказок из ответа
+  let message = text;
+  let suggestions: string[] = [];
 
-  return NextResponse.json({ message: text });
+  if (text.includes("---SUGGESTIONS---")) {
+    const parts = text.split("---SUGGESTIONS---");
+    message = parts[0].trim();
+    const suggestionsText = parts[1]?.trim();
+    if (suggestionsText) {
+      suggestions = suggestionsText
+        .split("\n")
+        .map((s: string) => s.trim())
+        .filter((s: string) => s.length > 0)
+        .slice(0, 4); // Берём максимум 4 подсказки
+    }
+  }
+
+  // Если подсказок нет, используем дефолтные в зависимости от роли
+  if (suggestions.length === 0) {
+    suggestions =
+      role === "doctor"
+        ? [
+            "Сформулируй SMART-цель",
+            "Какие противопоказания?",
+            "Критерии оценки прогресса",
+            "Альтернативные подходы",
+          ]
+        : [
+            "Какие упражнения делать?",
+            "Когда ожидать улучшения?",
+            "Что делать при боли?",
+            "Как часто заниматься?",
+          ];
+  }
+
+  return NextResponse.json({ message, suggestions });
 }

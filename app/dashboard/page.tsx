@@ -41,6 +41,7 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [patient, setPatient] = useState<Patient | null>(null);
   const [loading, setLoading] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [tab, setTab] = useState<"overview" | "progress" | "goals" | "chat">(
     "overview"
   );
@@ -51,14 +52,20 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
   >([]);
   const [input, setInput] = useState("");
   const [loadingGoals, setLoadingGoals] = useState(false);
+  const [suggestions, setSuggestions] = useState<string[]>([
+    "Сформулируй SMART-цель для мобильности",
+    "Цель по когнитивной реабилитации",
+    "Что приоритетнее для данного пациента?",
+    "Цель для восстановления самообслуживания",
+  ]);
   const chatEnd = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (patient) {
       const domainScores = patient.domainScores;
       const initialMessage = domainScores
-        ? `Добро пожаловать! Я ИИ-ассистент по реабилитации.\n\nПомогу сформулировать персонализированные SMART-цели для пациента ${patient.name}.\n\nТекущие индексы WHODAS 2.0:\nКогниция ${domainScores.cognition.toFixed(1)} · Мобильность ${domainScores.mobility.toFixed(1)} · Самообслуживание ${domainScores.self_care.toFixed(1)} · Взаимодействие ${domainScores.interaction.toFixed(1)} · Жизнедеятельность ${domainScores.life_activities.toFixed(1)} · Участие ${domainScores.participation.toFixed(1)}\n\nС чего начнём?`
-        : `Добро пожаловать! Я ИИ-ассистент по реабилитации.\n\nПомогу сформулировать персонализированные SMART-цели для пациента ${patient.name}.\n\nС чего начнём?`;
+        ? `Добро пожаловать! Я AI-ассистент по реабилитации.\n\nПомогу сформулировать персонализированные SMART-цели для пациента ${patient.name}.\n\nТекущие индексы WHODAS 2.0:\nПознание и коммуникация ${domainScores.cognition.toFixed(1)} · Мобильность ${domainScores.mobility.toFixed(1)} · Самообслуживание ${domainScores.self_care.toFixed(1)} · Межличностные взаимодействия ${domainScores.interaction.toFixed(1)} · Повседневная деятельность ${domainScores.life_activities.toFixed(1)} · Жизнь в обществе ${domainScores.participation.toFixed(1)}\n\nС чего начнём?`
+        : `Добро пожаловать! Я AI-ассистент по реабилитации.\n\nПомогу сформулировать персонализированные SMART-цели для пациента ${patient.name}.\n\nС чего начнём?`;
       setMsgs([{ role: "assistant", content: initialMessage }]);
     }
   }, [patient]);
@@ -158,6 +165,10 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
           ...prev,
           { role: "assistant" as const, content: data.message },
         ]);
+        // Update suggestions if provided
+        if (data.suggestions && data.suggestions.length > 0) {
+          setSuggestions(data.suggestions);
+        }
       } else {
         setMsgs((prev) => [
           ...prev,
@@ -211,18 +222,118 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
     { id: "overview", label: "Обзор" },
     { id: "progress", label: "Прогресс" },
     { id: "goals", label: `Цели (${goals.length})` },
-    { id: "chat", label: "ИИ-чат" },
+    { id: "chat", label: "AI-чат" },
   ];
 
   return (
     <div
       style={{
-        minHeight: "100vh",
+        height: "100vh",
         background: "#f8fafc",
         display: "flex",
         flexDirection: "column",
+        paddingBottom: "env(safe-area-inset-bottom)",
       }}
+      className="dashboard-container"
     >
+      <style>{`
+        .desktop-sidebar {
+          width: 220px;
+          background: white;
+          border-right: 1px solid #e2e8f0;
+          flex-shrink: 0;
+          display: flex;
+          flex-direction: column;
+        }
+        .sidebar-overlay {
+          display: none;
+        }
+        .sidebar-panel {
+          display: none;
+        }
+        .mobile-menu-btn {
+          display: none;
+        }
+        @media (max-width: 768px) {
+          .mobile-menu-btn {
+            display: block;
+          }
+          .desktop-sidebar {
+            display: none;
+          }
+          .dashboard-container .patient-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px 16px;
+          }
+          .dashboard-container .patient-info {
+            width: 100%;
+            margin-bottom: 8px;
+            gap: 12px;
+          }
+          .dashboard-container .patient-info > div:first-child {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            width: 100%;
+          }
+          .dashboard-container .patient-stats {
+            width: 100%;
+            justify-content: space-between;
+          }
+          .dashboard-container .tabs-container {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+          }
+          .dashboard-container .tabs-container > div {
+            min-width: max-content;
+          }
+          .dashboard-container main {
+            overflow-y: auto;
+          }
+          .dashboard-container .tab-content {
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: 16px;
+            overflow-x: hidden;
+          }
+          .sidebar-overlay {
+            display: block;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+          }
+          .sidebar-overlay.open {
+            opacity: 1;
+            pointer-events: auto;
+          }
+          .sidebar-panel {
+            display: flex;
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 280px;
+            background: white;
+            z-index: 1000;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+            flex-direction: column;
+            box-shadow: 2px 0 12px rgba(0, 0, 0, 0.1);
+          }
+          .sidebar-panel.open {
+            transform: translateX(0);
+          }
+        }
+      `}</style>
       <header
         style={{
           background: "white",
@@ -236,6 +347,21 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <button
+            onClick={() => setSidebarOpen(true)}
+            style={{
+              background: "none",
+              border: "none",
+              color: "#64748b",
+              cursor: "pointer",
+              fontSize: 18,
+              padding: "4px 8px",
+            }}
+            className="mobile-menu-btn"
+            title="Выбрать пациента"
+          >
+            ☰
+          </button>
           <button
             onClick={onBack}
             style={{
@@ -265,7 +391,7 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
             </span>
           </div>
           <span style={{ fontWeight: 600, color: "#1e293b", fontSize: 15 }}>
-            RehabPlatform
+            Ability
           </span>
           <span
             style={{
@@ -295,17 +421,117 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
         )}
       </header>
 
-      <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
-        <aside
+      <div
+        className={`sidebar-overlay ${sidebarOpen ? "open" : ""}`}
+        onClick={() => setSidebarOpen(false)}
+      />
+      <aside className={`sidebar-panel ${sidebarOpen ? "open" : ""}`}>
+        <div
           style={{
-            width: 220,
-            background: "white",
-            borderRight: "1px solid #e2e8f0",
-            flexShrink: 0,
-            overflowY: "auto",
+            padding: "16px",
+            borderBottom: "1px solid #e2e8f0",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
           }}
         >
-          <div style={{ padding: 16 }}>
+          <p
+            style={{
+              fontSize: 11,
+              fontWeight: 600,
+              color: "#94a3b8",
+              textTransform: "uppercase",
+              letterSpacing: "0.06em",
+              margin: 0,
+            }}
+          >
+            Пациенты
+          </p>
+          <button
+            onClick={() => setSidebarOpen(false)}
+            style={{
+              background: "none",
+              border: "none",
+              color: "#94a3b8",
+              cursor: "pointer",
+              fontSize: 20,
+              padding: "4px 8px",
+            }}
+          >
+            ×
+          </button>
+        </div>
+        <div
+          style={{
+            flex: 1,
+            overflowY: "auto",
+            padding: "16px",
+          }}
+        >
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            {patients.map((p) => (
+              <button
+                key={p.id}
+                onClick={() => {
+                  setPatient(p);
+                  setSidebarOpen(false);
+                }}
+                style={{
+                  width: "100%",
+                  background: patient?.id === p.id ? "#eff6ff" : "none",
+                  border:
+                    patient?.id === p.id
+                      ? "1px solid #bfdbfe"
+                      : "1px solid transparent",
+                  borderRadius: 10,
+                  padding: "10px 12px",
+                  textAlign: "left",
+                  cursor: "pointer",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div
+                    style={{
+                      width: 34,
+                      height: 34,
+                      borderRadius: "50%",
+                      background: patient?.id === p.id ? "#dbeafe" : "#f1f5f9",
+                      color: patient?.id === p.id ? "#1d4ed8" : "#64748b",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: 12,
+                      fontWeight: 600,
+                      flexShrink: 0,
+                    }}
+                  >
+                    {p.avatar}
+                  </div>
+                  <div>
+                    <p
+                      style={{
+                        fontSize: 13,
+                        fontWeight: 500,
+                        color: "#1e293b",
+                        margin: 0,
+                      }}
+                    >
+                      {p.name}
+                    </p>
+                    <p style={{ fontSize: 11, color: "#94a3b8", margin: 0 }}>
+                      {p.diagnosis}
+                    </p>
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      </aside>
+
+      <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
+        <aside className="desktop-sidebar">
+          <div style={{ padding: "16px 16px 12px" }}>
             <p
               style={{
                 fontSize: 11,
@@ -313,11 +539,19 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
                 color: "#94a3b8",
                 textTransform: "uppercase",
                 letterSpacing: "0.06em",
-                marginBottom: 10,
+                margin: 0,
               }}
             >
               Пациенты
             </p>
+          </div>
+          <div
+            style={{
+              flex: 1,
+              overflowY: "auto",
+              padding: "0 16px 16px",
+            }}
+          >
             <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
               {patients.map((p) => (
                 <button
@@ -382,9 +616,9 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
         <main
           style={{
             flex: 1,
-            overflowY: "auto",
             display: "flex",
             flexDirection: "column",
+            overflow: "hidden",
           }}
         >
           {!patient ? (
@@ -409,6 +643,7 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
           ) : (
             <>
               <div
+                className="patient-header"
                 style={{
                   background: "white",
                   borderBottom: "1px solid #e2e8f0",
@@ -417,6 +652,7 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
                 }}
               >
                 <div
+                  className="patient-info"
                   style={{
                     display: "flex",
                     alignItems: "center",
@@ -452,11 +688,13 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
                       {patient.name}
                     </h2>
                     <p style={{ fontSize: 13, color: "#94a3b8", margin: 0 }}>
-                      {patient.diagnosis} · {patient.age} лет · Неделя{" "}
-                      {patient.weeks}
+                      {patient.diagnosis}
                     </p>
                   </div>
-                  <div style={{ display: "flex", gap: 20 }}>
+                  <div
+                    className="patient-stats"
+                    style={{ display: "flex", gap: 20 }}
+                  >
                     {[
                       {
                         label: "Индекс WHODAS",
@@ -512,7 +750,10 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
                     ))}
                   </div>
                 </div>
-                <div style={{ display: "flex", gap: 4 }}>
+                <div
+                  className="tabs-container"
+                  style={{ display: "flex", gap: 4 }}
+                >
                   {tabs.map((t) => (
                     <button
                       key={t.id}
@@ -539,7 +780,19 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
                 </div>
               </div>
 
-              <div style={{ padding: 24, flex: 1 }}>
+              <div
+                className="tab-content"
+                style={{
+                  paddingTop: 12,
+                  paddingBottom: 12,
+                  paddingLeft: 24,
+                  paddingRight: 24,
+                  flex: 1,
+                  display: "flex",
+                  flexDirection: "column",
+                  minHeight: 0,
+                }}
+              >
                 {tab === "overview" && (
                   <OverviewTab
                     goals={goals}
@@ -560,6 +813,7 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
                     sendMessage={sendMessage}
                     loading={loadingGoals}
                     chatEnd={chatEnd as React.RefObject<HTMLDivElement>}
+                    suggestions={suggestions}
                   />
                 )}
               </div>

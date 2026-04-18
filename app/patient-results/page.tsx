@@ -54,7 +54,7 @@ const PATIENT_GOALS: Goal[] = [
   },
   {
     id: 3,
-    domain: "Когниция",
+    domain: "Познание и коммуникация",
     color: "#f59e0b",
     progress: 0,
     text: "Концентрация внимания ≥20 мин",
@@ -95,6 +95,13 @@ export default function PatientResults() {
   const [isLoading, setIsLoading] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
+
+  const [suggestions, setSuggestions] = useState<string[]>([
+    "Как улучшить мобильность?",
+    "Упражнения для восстановления",
+    "Когда ожидать результаты?",
+    "Что делать при боли?",
+  ]);
 
   // Scroll to bottom when new messages arrive
   useEffect(() => {
@@ -173,6 +180,11 @@ export default function PatientResults() {
           ...prev,
           { role: "assistant" as const, content: data.message },
         ]);
+
+        // Update suggestions if provided
+        if (data.suggestions && data.suggestions.length > 0) {
+          setSuggestions(data.suggestions);
+        }
       } else {
         setMessages((prev) => [
           ...prev,
@@ -335,33 +347,6 @@ export default function PatientResults() {
               📊 Мой путь реабилитации
             </div>
           </div>
-          <button
-            onClick={() => setIsChatOpen(true)}
-            style={{
-              background: "rgba(255,255,255,0.2)",
-              border: "none",
-              color: "white",
-              borderRadius: 8,
-              width: 40,
-              height: 40,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              cursor: "pointer",
-              fontSize: 20,
-              transition: "background 0.2s",
-            }}
-            onMouseEnter={(e) =>
-              ((e.target as HTMLButtonElement).style.background =
-                "rgba(255,255,255,0.3)")
-            }
-            onMouseLeave={(e) =>
-              ((e.target as HTMLButtonElement).style.background =
-                "rgba(255,255,255,0.2)")
-            }
-          >
-            💬
-          </button>
         </div>
 
         {/* Main Content - Mobile First with Desktop Adaptations */}
@@ -464,6 +449,69 @@ export default function PatientResults() {
           </div>
         </div>
       </div>
+
+      {/* Floating AI Chat Button */}
+      <button
+        style={{
+          position: "fixed",
+          bottom: 24,
+          right: 24,
+          justifyContent: "center",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          cursor: "pointer",
+          zIndex: 999,
+          background: "none",
+          border: "none",
+          padding: 0,
+        }}
+        onClick={() => setIsChatOpen(true)}
+      >
+        <div
+          className="ai-chat-button"
+          style={{
+            background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
+            border: "none",
+            color: "white",
+            borderRadius: 16,
+            width: 64,
+            height: 64,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+            fontSize: 28,
+            transition: "transform 0.2s, box-shadow 0.2s",
+            position: "relative",
+            overflow: "hidden",
+            boxShadow: "0 4px 12px rgba(59, 130, 246, 0.4)",
+          }}
+          onMouseEnter={(e) => {
+            (e.target as HTMLElement).style.transform = "scale(1.1)";
+            (e.target as HTMLElement).style.boxShadow =
+              "0 6px 20px rgba(59, 130, 246, 0.5)";
+          }}
+          onMouseLeave={(e) => {
+            (e.target as HTMLElement).style.transform = "scale(1)";
+            (e.target as HTMLElement).style.boxShadow =
+              "0 4px 12px rgba(59, 130, 246, 0.4)";
+          }}
+        >
+          💬
+        </div>
+        <div
+          style={{
+            fontSize: 11,
+            fontWeight: 600,
+            color: "#3b82f6",
+            marginTop: 4,
+            textShadow: "0 1px 2px rgba(0,0,0,0.1)",
+          }}
+        >
+          AI-чат
+        </div>
+      </button>
 
       {/* Goal Details Modal */}
       {selectedGoal && (
@@ -774,11 +822,29 @@ export default function PatientResults() {
                       color: msg.role === "user" ? "white" : "#1e293b",
                       fontSize: 14,
                       lineHeight: 1.5,
-                      whiteSpace: "pre-wrap",
-                      wordBreak: "break-word" as const,
                     }}
                   >
-                    {msg.content}
+                    <div
+                      style={{
+                        whiteSpace: "pre-wrap",
+                        wordBreak: "break-word",
+                      }}
+                      dangerouslySetInnerHTML={{
+                        __html: msg.content
+                          .replace(
+                            /### (.*?)(\n|$)/g,
+                            "<strong>$1</strong><br/>"
+                          )
+                          .replace(
+                            /## (.*?)(\n|$)/g,
+                            "<strong>$1</strong><br/>"
+                          )
+                          .replace(/# (.*?)(\n|$)/g, "<strong>$1</strong><br/>")
+                          .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+                          .replace(/\*(.*?)\*/g, "<em>$1</em>")
+                          .replace(/\n/g, "<br/>"),
+                      }}
+                    />
                   </div>
                 </div>
               ))}
@@ -825,6 +891,27 @@ export default function PatientResults() {
                 background: "white",
               }}
             >
+              {/* Suggestions */}
+              <div className="patient-suggestions">
+                {suggestions.map((s, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setInputValue(s)}
+                    style={{
+                      fontSize: 12,
+                      background: "#eff6ff",
+                      color: "#1d4ed8",
+                      border: "none",
+                      padding: "5px 12px",
+                      borderRadius: 99,
+                      cursor: "pointer",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
               <div style={{ display: "flex", gap: 8 }}>
                 <input
                   type="text"
@@ -905,6 +992,31 @@ export default function PatientResults() {
           }
         }
 
+        @keyframes shimmer {
+          0% {
+            transform: translateX(-150%) rotate(45deg);
+          }
+          100% {
+            transform: translateX(250%) rotate(45deg);
+          }
+        }
+
+        .ai-chat-button::before {
+          content: '';
+          position: absolute;
+          top: -100%;
+          left: -100%;
+          width: 80%;
+          height: 300%;
+          background: linear-gradient(
+            90deg,
+            transparent,
+            rgba(255, 255, 255, 0.6),
+            transparent
+          );
+          animation: shimmer 2.4s ease-in-out infinite;
+        }
+
         /* Desktop layout: side-by-side */
         @media (min-width: 768px) {
           .desktop-layout {
@@ -933,6 +1045,25 @@ export default function PatientResults() {
 
           .input-area {
             padding: 16px 24px 24px !important;
+          }
+        }
+
+        /* Mobile: horizontal scroll for suggestions */
+        .patient-suggestions {
+          display: flex;
+          gap: 6px;
+          margin-bottom: 10px;
+          flex-wrap: wrap;
+        }
+        @media (max-width: 767px) {
+          .patient-suggestions {
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+          }
+          .patient-suggestions::-webkit-scrollbar {
+            display: none;
           }
         }
 

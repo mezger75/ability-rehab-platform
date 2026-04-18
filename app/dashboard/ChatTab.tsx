@@ -5,6 +5,7 @@ interface ChatTabProps {
   sendMessage: () => void;
   loading: boolean;
   chatEnd: React.RefObject<HTMLDivElement>;
+  suggestions: string[];
 }
 
 export function ChatTab({
@@ -14,14 +15,8 @@ export function ChatTab({
   sendMessage,
   loading,
   chatEnd,
+  suggestions,
 }: ChatTabProps) {
-  const SUGGESTIONS = [
-    "Сформулируй SMART-цель для мобильности",
-    "Цель по когнитивной реабилитации",
-    "Что приоритетнее для данного пациента?",
-    "Цель для восстановления самообслуживания",
-  ];
-
   return (
     <div
       style={{
@@ -31,7 +26,31 @@ export function ChatTab({
         height: "calc(100vh - 280px)",
         minHeight: 480,
       }}
+      className="chat-tab-container"
     >
+      <style>{`
+        .suggestions-container {
+          display: flex;
+          gap: 6px;
+          margin-bottom: 10px;
+          flex-wrap: wrap;
+        }
+        @media (max-width: 768px) {
+          .chat-tab-container {
+            height: calc(100vh - 200px);
+            min-height: 400px;
+          }
+          .suggestions-container {
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+          }
+          .suggestions-container::-webkit-scrollbar {
+            display: none;
+          }
+        }
+      `}</style>
       <div
         style={{
           background: "white",
@@ -45,10 +64,7 @@ export function ChatTab({
         <p
           style={{ fontSize: 14, fontWeight: 500, color: "#1e293b", margin: 0 }}
         >
-          ИИ-ассистент: формулирование SMART-целей
-        </p>
-        <p style={{ fontSize: 12, color: "#94a3b8", margin: "2px 0 0" }}>
-          Цели автоматически сохраняются на вкладке «Цели»
+          AI-ассистент: формулирование SMART-целей
         </p>
       </div>
       <div
@@ -107,17 +123,20 @@ export function ChatTab({
                 color: m.role === "user" ? "white" : "#1e293b",
               }}
             >
-              <pre
+              <div
                 style={{
-                  fontFamily: "inherit",
                   whiteSpace: "pre-wrap",
-                  margin: 0,
+                  wordBreak: "break-word",
                   fontSize: 13,
                   lineHeight: 1.6,
                 }}
-              >
-                {m.content}
-              </pre>
+                dangerouslySetInnerHTML={{
+                  __html: m.content
+                    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+                    .replace(/\*(.*?)\*/g, "<em>$1</em>")
+                    .replace(/\n/g, "<br/>"),
+                }}
+              />
             </div>
           </div>
         ))}
@@ -176,15 +195,8 @@ export function ChatTab({
           flexShrink: 0,
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            gap: 6,
-            marginBottom: 10,
-            flexWrap: "wrap",
-          }}
-        >
-          {SUGGESTIONS.map((s, i) => (
+        <div className="suggestions-container">
+          {suggestions.map((s, i) => (
             <button
               key={i}
               onClick={() => setInput(s)}
@@ -196,6 +208,7 @@ export function ChatTab({
                 padding: "5px 12px",
                 borderRadius: 99,
                 cursor: "pointer",
+                whiteSpace: "nowrap",
               }}
             >
               {s}
