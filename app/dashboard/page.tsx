@@ -395,7 +395,7 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
             }}
           >
             <span style={{ color: "white", fontSize: 12, fontWeight: 700 }}>
-              R
+              A
             </span>
           </div>
           <span style={{ fontWeight: 600, color: "#1e293b", fontSize: 15 }}>
