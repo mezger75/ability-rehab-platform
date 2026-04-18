@@ -62,14 +62,23 @@ function LandingPage() {
       </div>
       <h1
         style={{
-          fontSize: 28,
+          fontSize: 36,
           fontWeight: 700,
-          color: "#1e293b",
+          color: "#232f42",
           margin: "0 0 8px",
           textAlign: "center",
         }}
       >
-        Ability
+        <span style={{ position: "relative", display: "inline-block" }}>
+          <span className="shimmer-letter" style={{ color: "#2563eb" }}>
+            A
+          </span>
+          <span style={{ color: "#1e293b" }}>b</span>
+          <span className="shimmer-letter" style={{ color: "#2563eb" }}>
+            I
+          </span>
+          <span style={{ color: "#1e293b" }}>lity</span>
+        </span>
       </h1>
       <p
         style={{
@@ -167,6 +176,32 @@ export default function App() {
   return (
     <div style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
       <LandingPage />
+      <style>{`
+        @keyframes shimmerText {
+          0% {
+            background-position: 0% 50%;
+          }
+          100% {
+            background-position: 200% 50%;
+          }
+        }
+
+        .shimmer-letter {
+          background: linear-gradient(
+            90deg,
+            #0c56f4 0%,
+            #70b1ff 25%,
+            #0c56f4 50%,
+            #70b1ff 75%,
+            #0c56f4 100%
+          );
+          background-size: 200% 100%;
+          -webkit-background-clip: text;
+          background-clip: text;
+          -webkit-text-fill-color: transparent;
+          animation: shimmerText 3s linear infinite;
+        }
+      `}</style>
     </div>
   );
 }
