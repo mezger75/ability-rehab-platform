@@ -63,7 +63,7 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
     if (patient) {
       const domainScores = patient.domainScores;
       const initialMessage = domainScores
-        ? `Добро пожаловать! Я ИИ-ассистент по реабилитации.\n\nПомогу сформулировать персонализированные SMART-цели для пациента ${patient.name}.\n\nТекущие индексы WHODAS 2.0:\nКогниция ${domainScores.cognition.toFixed(1)} · Мобильность ${domainScores.mobility.toFixed(1)} · Самообслуживание ${domainScores.self_care.toFixed(1)} · Взаимодействие ${domainScores.interaction.toFixed(1)} · Жизнедеятельность ${domainScores.life_activities.toFixed(1)} · Участие ${domainScores.participation.toFixed(1)}\n\nС чего начнём?`
+        ? `Добро пожаловать! Я ИИ-ассистент по реабилитации.\n\nПомогу сформулировать персонализированные SMART-цели для пациента ${patient.name}.\n\nТекущие индексы WHODAS 2.0:\nПознание и коммуникация ${domainScores.cognition.toFixed(1)} · Мобильность ${domainScores.mobility.toFixed(1)} · Самообслуживание ${domainScores.self_care.toFixed(1)} · Межличностные взаимодействия ${domainScores.interaction.toFixed(1)} · Повседневная деятельность ${domainScores.life_activities.toFixed(1)} · Жизнь в обществе ${domainScores.participation.toFixed(1)}\n\nС чего начнём?`
         : `Добро пожаловать! Я ИИ-ассистент по реабилитации.\n\nПомогу сформулировать персонализированные SMART-цели для пациента ${patient.name}.\n\nС чего начнём?`;
       setMsgs([{ role: "assistant", content: initialMessage }]);
     }
@@ -232,7 +232,45 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
         display: "flex",
         flexDirection: "column",
       }}
+      className="dashboard-container"
     >
+      <style>{`
+        @media (max-width: 768px) {
+          .dashboard-container aside {
+            display: none !important;
+          }
+          .dashboard-container .patient-header {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 12px !important;
+            padding: 12px 16px !important;
+          }
+          .dashboard-container .patient-stats {
+            width: 100% !important;
+            justify-content: space-between !important;
+          }
+          .dashboard-container .patient-info {
+            flex-direction: row !important;
+            width: 100% !important;
+          }
+          .dashboard-container .tabs-container {
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch;
+          }
+          .dashboard-container .tabs-container > div {
+            min-width: max-content !important;
+          }
+          .dashboard-container main {
+            overflow-y: auto !important;
+          }
+          .dashboard-container .tab-content {
+            overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch;
+            padding: 16px !important;
+            overflow-x: hidden !important;
+          }
+        }
+      `}</style>
       <header
         style={{
           background: "white",
@@ -275,7 +313,7 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
             </span>
           </div>
           <span style={{ fontWeight: 600, color: "#1e293b", fontSize: 15 }}>
-            RehabPlatform
+            Ability
           </span>
           <span
             style={{
@@ -428,6 +466,7 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
           ) : (
             <>
               <div
+                className="patient-header"
                 style={{
                   background: "white",
                   borderBottom: "1px solid #e2e8f0",
@@ -436,6 +475,7 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
                 }}
               >
                 <div
+                  className="patient-info"
                   style={{
                     display: "flex",
                     alignItems: "center",
@@ -475,7 +515,10 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
                       {patient.weeks}
                     </p>
                   </div>
-                  <div style={{ display: "flex", gap: 20 }}>
+                  <div
+                    className="patient-stats"
+                    style={{ display: "flex", gap: 20 }}
+                  >
                     {[
                       {
                         label: "Индекс WHODAS",
@@ -531,7 +574,10 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
                     ))}
                   </div>
                 </div>
-                <div style={{ display: "flex", gap: 4 }}>
+                <div
+                  className="tabs-container"
+                  style={{ display: "flex", gap: 4 }}
+                >
                   {tabs.map((t) => (
                     <button
                       key={t.id}
@@ -559,6 +605,7 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
               </div>
 
               <div
+                className="tab-content"
                 style={{
                   padding: 24,
                   flex: 1,

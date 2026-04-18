@@ -66,7 +66,7 @@ function LandingPage() {
           textAlign: "center",
         }}
       >
-        RehabPlatform
+        Ability - Платформа реабилитации
       </h1>
       <p
         style={{

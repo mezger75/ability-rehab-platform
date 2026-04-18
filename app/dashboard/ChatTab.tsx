@@ -26,7 +26,16 @@ export function ChatTab({
         height: "calc(100vh - 280px)",
         minHeight: 480,
       }}
+      className="chat-tab-container"
     >
+      <style>{`
+        @media (max-width: 768px) {
+          .chat-tab-container {
+            height: calc(100vh - 200px) !important;
+            min-height: 400px !important;
+          }
+        }
+      `}</style>
       <div
         style={{
           background: "white",
@@ -102,17 +111,20 @@ export function ChatTab({
                 color: m.role === "user" ? "white" : "#1e293b",
               }}
             >
-              <pre
+              <div
                 style={{
-                  fontFamily: "inherit",
                   whiteSpace: "pre-wrap",
-                  margin: 0,
+                  wordBreak: "break-word",
                   fontSize: 13,
                   lineHeight: 1.6,
                 }}
-              >
-                {m.content}
-              </pre>
+                dangerouslySetInnerHTML={{
+                  __html: m.content
+                    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+                    .replace(/\*(.*?)\*/g, "<em>$1</em>")
+                    .replace(/\n/g, "<br/>"),
+                }}
+              />
             </div>
           </div>
         ))}

@@ -12,10 +12,12 @@ import { PROGRESS_DATA } from "../mockData";
 
 export function ProgressTab() {
   const DOMAIN_COLORS = {
-    Когниция: "#2563eb",
+    "Познание и коммуникация": "#2563eb",
     Мобильность: "#7c3aed",
     Самообслуж: "#d97706",
-    Участие: "#059669",
+    "Межличностные взаимодействия": "#ec4899",
+    "Повседневная деятельность": "#10b981",
+    "Жизнь в обществе": "#059669",
   };
 
   return (
@@ -57,14 +59,19 @@ export function ProgressTab() {
               ))}
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-            <XAxis dataKey="week" tick={{ fontSize: 12 }} />
+            <XAxis dataKey="week" tick={{ fontSize: 12, fill: "#64748b" }} />
             <YAxis
               domain={[1, 5]}
               reversed
-              tick={{ fontSize: 12 }}
+              tick={{ fontSize: 12, fill: "#64748b" }}
               tickCount={5}
             />
             <Tooltip
+              contentStyle={{
+                backgroundColor: "white",
+                border: "1px solid #e2e8f0",
+                borderRadius: 8,
+              }}
               formatter={(v, name) => {
                 if (v === undefined || v === null) return ["", ""];
                 const val = typeof v === "number" ? v.toFixed(1) : String(v);
