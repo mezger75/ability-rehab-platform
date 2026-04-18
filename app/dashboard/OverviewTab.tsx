@@ -5,9 +5,16 @@ import { GoalAchievementStatus } from "./GoalAchievementStatus";
 interface OverviewTabProps {
   goals: Goal[];
   patient: Patient | null;
+  onUpdateGas?: () => void;
+  gasLoading?: boolean;
 }
 
-export function OverviewTab({ goals, patient }: OverviewTabProps) {
+export function OverviewTab({
+  goals,
+  patient,
+  onUpdateGas,
+  gasLoading,
+}: OverviewTabProps) {
   if (!patient) {
     return (
       <div
@@ -97,7 +104,11 @@ export function OverviewTab({ goals, patient }: OverviewTabProps) {
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
         <WHODASProfileChart patient={patient} />
-        <GoalAchievementStatus goals={goals} />
+        <GoalAchievementStatus
+          goals={goals}
+          onUpdateGas={onUpdateGas}
+          gasLoading={gasLoading}
+        />
       </div>
     </div>
   );

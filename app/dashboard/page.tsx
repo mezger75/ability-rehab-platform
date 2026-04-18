@@ -1,24 +1,6 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import {
-  RadarChart,
-  Radar,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  AreaChart,
-  Area,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  Cell,
-} from "recharts";
 import type { Goal, GeneratedGoal, Submission, Patient } from "../types";
 import { INITIAL_GOALS, GOAL_COLORS } from "../mockData";
 import { DashboardSkeleton } from "./DashboardSkeleton";
@@ -35,8 +17,6 @@ function DashboardWrapper({ children }: { children: React.ReactNode }) {
     </div>
   );
 }
-
-// ─── Doctor Dashboard ─────────────────────────────────────────────────────────
 
 interface DoctorDashboardProps {
   onBack: () => void;
@@ -64,27 +44,22 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
   const [tab, setTab] = useState<"overview" | "progress" | "goals" | "chat">(
     "overview"
   );
+  const [gasLoading, setGasLoading] = useState(false);
   const [goals, setGoals] = useState(INITIAL_GOALS);
   const [msgs, setMsgs] = useState<
     Array<{ role: "user" | "assistant"; content: string }>
   >([]);
   const [input, setInput] = useState("");
   const [loadingGoals, setLoadingGoals] = useState(false);
+  const chatEnd = useRef<HTMLDivElement>(null);
 
-  // Generate initial message based on selected patient
   useEffect(() => {
     if (patient) {
       const domainScores = patient.domainScores;
       const initialMessage = domainScores
         ? `Добро пожаловать! Я ИИ-ассистент по реабилитации.\n\nПомогу сформулировать персонализированные SMART-цели для пациента ${patient.name}.\n\nТекущие индексы WHODAS 2.0:\nКогниция ${domainScores.cognition.toFixed(1)} · Мобильность ${domainScores.mobility.toFixed(1)} · Самообслуживание ${domainScores.self_care.toFixed(1)} · Взаимодействие ${domainScores.interaction.toFixed(1)} · Жизнедеятельность ${domainScores.life_activities.toFixed(1)} · Участие ${domainScores.participation.toFixed(1)}\n\nС чего начнём?`
         : `Добро пожаловать! Я ИИ-ассистент по реабилитации.\n\nПомогу сформулировать персонализированные SMART-цели для пациента ${patient.name}.\n\nС чего начнём?`;
-
-      setMsgs([
-        {
-          role: "assistant",
-          content: initialMessage,
-        },
-      ]);
+      setMsgs([{ role: "assistant", content: initialMessage }]);
     }
   }, [patient]);
 
@@ -94,9 +69,7 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
         setLoading(true);
         const res = await fetch("/api/survey");
         const result = await res.json();
-
         if (result.data && result.data.length > 0) {
-          // Transform survey responses into Patient objects
           const surveyPatients: Patient[] = result.data.map(
             (survey: SurveyResponse) => ({
               id: survey.id,
@@ -108,9 +81,7 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
               domainScores: survey.domain_scores,
             })
           );
-
           setPatients(surveyPatients);
-          // Set first patient as selected if none selected
           if (!patient && surveyPatients.length > 0) {
             setPatient(surveyPatients[0]);
           }
@@ -123,8 +94,6 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
     };
     fetchSurveys();
   }, []);
-
-  const chatEnd = useRef<HTMLDivElement>(null);
 
   const sendMessage = async () => {
     if (!input.trim() || loadingGoals) return;
@@ -164,12 +133,7 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
       const data = await res.json();
 
       if (data.goals && data.goals.length > 0) {
-        const reply = `Сформулированы SMART-цели:\n\n${data.goals
-          .map(
-            (g: GeneratedGoal, i: number) =>
-              `${i + 1}. ${g.text}\n   Домен: ${g.domain}\n   Срок: ${g.timeBound}`
-          )
-          .join("\n\n")}`;
+        const reply = `Сформулированы SMART-цели:\n\n${data.goals.map((g: GeneratedGoal, i: number) => `${i + 1}. ${g.text}\n   Домен: ${g.domain}\n   Срок: ${g.timeBound}`).join("\n\n")}`;
         setMsgs((prev) => [
           ...prev,
           { role: "assistant" as const, content: reply },
@@ -217,6 +181,32 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
     );
   };
 
+  const updateGasStatus = async () => {
+    setGasLoading(true);
+    try {
+      const res = await fetch("/api/goals/gas", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ goals, patient_name: patient?.name }),
+      });
+      const data = await res.json();
+      if (data.gasResults) {
+        setGoals((prev) =>
+          prev.map((goal, index) => {
+            const gasResult = data.gasResults.find(
+              (r: { goalIndex: number; status: number }) =>
+                r.goalIndex === index
+            );
+            return gasResult ? { ...goal, gasScore: gasResult.status } : goal;
+          })
+        );
+      }
+    } catch (error) {
+      console.error("GAS error:", error);
+    }
+    setGasLoading(false);
+  };
+
   const tabs = [
     { id: "overview", label: "Обзор" },
     { id: "progress", label: "Прогресс" },
@@ -233,7 +223,6 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
         flexDirection: "column",
       }}
     >
-      {/* Top bar */}
       <header
         style={{
           background: "white",
@@ -307,7 +296,6 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
       </header>
 
       <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
-        {/* Sidebar */}
         <aside
           style={{
             width: 220,
@@ -388,52 +376,9 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
                 </button>
               ))}
             </div>
-            {submissions.length > 0 && (
-              <>
-                <p
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 600,
-                    color: "#94a3b8",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.06em",
-                    margin: "16px 0 8px",
-                  }}
-                >
-                  Новые опросы
-                </p>
-                {submissions.map((s, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      background: "#f0fdf4",
-                      border: "1px solid #bbf7d0",
-                      borderRadius: 8,
-                      padding: "8px 10px",
-                      marginBottom: 4,
-                    }}
-                  >
-                    <p
-                      style={{
-                        fontSize: 12,
-                        fontWeight: 500,
-                        color: "#166534",
-                        margin: 0,
-                      }}
-                    >
-                      {s.name}
-                    </p>
-                    <p style={{ fontSize: 11, color: "#16a34a", margin: 0 }}>
-                      Индекс: {s.total}/5
-                    </p>
-                  </div>
-                ))}
-              </>
-            )}
           </div>
         </aside>
 
-        {/* Main */}
         <main
           style={{
             flex: 1,
@@ -463,7 +408,6 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
             </div>
           ) : (
             <>
-              {/* Patient header */}
               <div
                 style={{
                   background: "white",
@@ -597,7 +541,12 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
 
               <div style={{ padding: 24, flex: 1 }}>
                 {tab === "overview" && (
-                  <OverviewTab goals={goals} patient={patient} />
+                  <OverviewTab
+                    goals={goals}
+                    patient={patient}
+                    onUpdateGas={updateGasStatus}
+                    gasLoading={gasLoading}
+                  />
                 )}
                 {tab === "progress" && <ProgressTab />}
                 {tab === "goals" && (
@@ -622,12 +571,9 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
   );
 }
 
-// ─── Default Export ───────────────────────────────────────────────────────────
-
 export default function DashboardPage() {
   const router = useRouter();
   const [submissions, setSubmissions] = useState<Submission[]>([]);
-
   return (
     <DashboardWrapper>
       <DoctorDashboard

@@ -2,9 +2,15 @@ import type { Goal } from "../types";
 
 interface GoalAchievementStatusProps {
   goals: Goal[];
+  onUpdateGas?: () => void;
+  gasLoading?: boolean;
 }
 
-export function GoalAchievementStatus({ goals }: GoalAchievementStatusProps) {
+export function GoalAchievementStatus({
+  goals,
+  onUpdateGas,
+  gasLoading,
+}: GoalAchievementStatusProps) {
   const gasLabels = {
     "-2": "Исходный",
     "-1": "Лучше",
@@ -30,16 +36,38 @@ export function GoalAchievementStatus({ goals }: GoalAchievementStatusProps) {
         border: "1px solid #e2e8f0",
       }}
     >
-      <h3
+      <div
         style={{
-          fontSize: 14,
-          fontWeight: 500,
-          color: "#374151",
-          margin: "0 0 16px",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 16,
         }}
       >
-        Статус достижения целей (GAS)
-      </h3>
+        <h3
+          style={{ fontSize: 14, fontWeight: 500, color: "#374151", margin: 0 }}
+        >
+          Статус достижения целей (GAS)
+        </h3>
+        {onUpdateGas && (
+          <button
+            onClick={onUpdateGas}
+            disabled={gasLoading}
+            style={{
+              background: gasLoading ? "#e2e8f0" : "#2563eb",
+              color: gasLoading ? "#94a3b8" : "white",
+              border: "none",
+              borderRadius: 8,
+              padding: "6px 14px",
+              fontSize: 12,
+              fontWeight: 500,
+              cursor: gasLoading ? "default" : "pointer",
+            }}
+          >
+            {gasLoading ? "Анализирую..." : "Обновить GAS"}
+          </button>
+        )}
+      </div>
       {goals.length === 0 ? (
         <div
           style={{
