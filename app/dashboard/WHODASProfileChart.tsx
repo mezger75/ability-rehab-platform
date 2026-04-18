@@ -18,12 +18,24 @@ export function WHODASProfileChart({ patient }: WHODASProfileChartProps) {
   // Transform domain scores into chart data
   const chartData = patient.domainScores
     ? [
-        { domain: "Когниция", current: patient.domainScores.cognition },
+        {
+          domain: "Познание и коммуникация",
+          current: patient.domainScores.cognition,
+        },
         { domain: "Мобильность", current: patient.domainScores.mobility },
-        { domain: "Самообслуж", current: patient.domainScores.self_care },
-        { domain: "Взаимодейств", current: patient.domainScores.interaction },
-        { domain: "Жизнедеят", current: patient.domainScores.life_activities },
-        { domain: "Участие", current: patient.domainScores.participation },
+        { domain: "Самообслуживание", current: patient.domainScores.self_care },
+        {
+          domain: "Межличностные взаимодействия",
+          current: patient.domainScores.interaction,
+        },
+        {
+          domain: "Повседневная деятельность",
+          current: patient.domainScores.life_activities,
+        },
+        {
+          domain: "Жизнь в обществе",
+          current: patient.domainScores.participation,
+        },
       ]
     : [];
 

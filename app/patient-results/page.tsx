@@ -54,7 +54,7 @@ const PATIENT_GOALS: Goal[] = [
   },
   {
     id: 3,
-    domain: "Когниция",
+    domain: "Познание и коммуникация",
     color: "#f59e0b",
     progress: 45,
     text: "Концентрация внимания ≥20 мин",

@@ -7,7 +7,15 @@ interface GoalsTabProps {
 
 export function GoalsTab({ goals, setGoals }: GoalsTabProps) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 16,
+        height: "100%",
+        overflowY: "auto",
+      }}
+    >
       <div
         style={{
           display: "flex",
