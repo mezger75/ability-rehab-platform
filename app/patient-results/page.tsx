@@ -88,6 +88,15 @@ interface GeneratedGoal {
 
 export default function PatientResults() {
   const router = useRouter();
+  const getPatientName = () => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      return params.get("name") || "Пациент";
+    }
+    return "Пациент";
+  };
+
+  const [patientName] = useState(getPatientName);
   const [messages, setMessages] = useState<ChatMessage[]>(INITIAL_MESSAGES);
   const [inputValue, setInputValue] = useState("");
   const [goals, setGoals] = useState<Goal[]>(PATIENT_GOALS);
@@ -127,7 +136,7 @@ export default function PatientResults() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           patient: {
-            name: "Пациент",
+            name: patientName,
             age: 0,
             diagnosis: "Данные из опроса WHODAS",
             vas_rest: 2,
@@ -287,6 +296,9 @@ export default function PatientResults() {
               color: "#64748b",
               lineHeight: 1.4,
               maxWidth: 120,
+              textAlign: "center",
+              whiteSpace: "normal",
+              overflow: "hidden",
             }}
           >
             {goal.text}

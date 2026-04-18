@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import type { Goal, GeneratedGoal, Submission, Patient } from "../types";
-import { INITIAL_GOALS, GOAL_COLORS } from "../mockData";
+import { GOAL_COLORS } from "../mockData";
 import { DashboardSkeleton } from "./DashboardSkeleton";
 import { OverviewTab } from "./OverviewTab";
 import { ProgressTab } from "./ProgressTab";
@@ -46,7 +46,7 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
     "overview"
   );
   const [gasLoading, setGasLoading] = useState(false);
-  const [goals, setGoals] = useState(INITIAL_GOALS);
+  const [goals, setGoals] = useState<Goal[]>([]);
   const [msgs, setMsgs] = useState<
     Array<{ role: "user" | "assistant"; content: string }>
   >([]);
@@ -91,6 +91,14 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
           setPatients(surveyPatients);
           if (!patient && surveyPatients.length > 0) {
             setPatient(surveyPatients[0]);
+            // Загружаем цели для первого пациента
+            const goalsRes = await fetch(
+              `/api/goals?patient_name=${encodeURIComponent(surveyPatients[0].name)}`
+            );
+            const goalsData = await goalsRes.json();
+            if (goalsData.goals) {
+              setGoals(goalsData.goals);
+            }
           }
         }
       } catch (error) {
@@ -556,7 +564,14 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
               {patients.map((p) => (
                 <button
                   key={p.id}
-                  onClick={() => setPatient(p)}
+                  onClick={async () => {
+                    setPatient(p);
+                    const goalsRes = await fetch(
+                      `/api/goals?patient_name=${encodeURIComponent(p.name)}`
+                    );
+                    const goalsData = await goalsRes.json();
+                    if (goalsData.goals) setGoals(goalsData.goals);
+                  }}
                   style={{
                     width: "100%",
                     background: patient?.id === p.id ? "#eff6ff" : "none",

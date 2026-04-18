@@ -370,7 +370,7 @@ export async function POST(request: NextRequest) {
     : "";
 
   const systemMessage = patientContext
-    ? `${SYSTEM_PROMPT}\n\n${patientContext}`
+    ? `${SYSTEM_PROMPT}\n\n${patientContext}\n\nВАЖНО: Когда формулируешь SMART-цель — возвращай её ТОЛЬКО в формате JSON массива без дополнительного текста:\n[{"text":"...","domain":"...","specific":"...","measurable":"...","achievable":"...","relevant":"...","timeBound":"..."}]\nЕсли это обычный диалог без формулировки цели — отвечай обычным текстом.`
     : SYSTEM_PROMPT;
 
   const response = await fetch(
@@ -407,6 +407,30 @@ export async function POST(request: NextRequest) {
     const clean = text.replace(/```json|```/g, "").trim();
     if (clean.startsWith("[")) {
       const goals = JSON.parse(clean);
+
+      // Сохраняем цели в Supabase
+      if (patient?.name) {
+        const { createClient } = await import("@supabase/supabase-js");
+        const supabase = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        );
+        for (const goal of goals) {
+          await supabase.from("goals").insert({
+            patient_name: patient.name,
+            domain: goal.domain,
+            text: goal.text,
+            specific: goal.specific,
+            measurable: goal.measurable,
+            achievable: goal.achievable,
+            relevant: goal.relevant,
+            time_bound: goal.timeBound,
+            gas_score: 0,
+            color: "#3b82f6",
+          });
+        }
+      }
+
       return NextResponse.json({ goals });
     }
   } catch {
@@ -425,11 +449,10 @@ export async function POST(request: NextRequest) {
         .split("\n")
         .map((s: string) => s.trim())
         .filter((s: string) => s.length > 0)
-        .slice(0, 4); // Берём максимум 4 подсказки
+        .slice(0, 4);
     }
   }
 
-  // Если подсказок нет, используем дефолтные в зависимости от роли
   if (suggestions.length === 0) {
     suggestions =
       role === "doctor"
