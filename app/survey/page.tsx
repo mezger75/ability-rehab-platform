@@ -167,6 +167,10 @@ export default function PatientQuestionnaire() {
       setNameError("Имя должно содержать минимум 2 символа");
       return;
     }
+    if (/\d/.test(trimmedName)) {
+      setNameError("Имя не должно содержать цифры");
+      return;
+    }
     setNameError("");
     setPhase("questions");
   };
@@ -349,6 +353,7 @@ export default function PatientQuestionnaire() {
                       if (nameError) setNameError("");
                     }}
                     placeholder="Введите имя"
+                    maxLength={50}
                     style={{
                       width: "100%",
                       border: `1px solid ${nameError ? "#ef4444" : "#e2e8f0"}`,
