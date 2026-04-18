@@ -29,10 +29,25 @@ export function ChatTab({
       className="chat-tab-container"
     >
       <style>{`
+        .suggestions-container {
+          display: flex;
+          gap: 6px;
+          margin-bottom: 10px;
+          flex-wrap: wrap;
+        }
         @media (max-width: 768px) {
           .chat-tab-container {
-            height: calc(100vh - 200px) !important;
-            min-height: 400px !important;
+            height: calc(100vh - 200px);
+            min-height: 400px;
+          }
+          .suggestions-container {
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+          }
+          .suggestions-container::-webkit-scrollbar {
+            display: none;
           }
         }
       `}</style>
@@ -50,9 +65,6 @@ export function ChatTab({
           style={{ fontSize: 14, fontWeight: 500, color: "#1e293b", margin: 0 }}
         >
           ИИ-ассистент: формулирование SMART-целей
-        </p>
-        <p style={{ fontSize: 12, color: "#94a3b8", margin: "2px 0 0" }}>
-          Цели автоматически сохраняются на вкладке «Цели»
         </p>
       </div>
       <div
@@ -183,14 +195,7 @@ export function ChatTab({
           flexShrink: 0,
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            gap: 6,
-            marginBottom: 10,
-            flexWrap: "wrap",
-          }}
-        >
+        <div className="suggestions-container">
           {suggestions.map((s, i) => (
             <button
               key={i}
@@ -203,6 +208,7 @@ export function ChatTab({
                 padding: "5px 12px",
                 borderRadius: 99,
                 cursor: "pointer",
+                whiteSpace: "nowrap",
               }}
             >
               {s}
