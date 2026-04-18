@@ -5,6 +5,7 @@ interface ChatTabProps {
   sendMessage: () => void;
   loading: boolean;
   chatEnd: React.RefObject<HTMLDivElement>;
+  suggestions: string[];
 }
 
 export function ChatTab({
@@ -14,14 +15,8 @@ export function ChatTab({
   sendMessage,
   loading,
   chatEnd,
+  suggestions,
 }: ChatTabProps) {
-  const SUGGESTIONS = [
-    "Сформулируй SMART-цель для мобильности",
-    "Цель по когнитивной реабилитации",
-    "Что приоритетнее для данного пациента?",
-    "Цель для восстановления самообслуживания",
-  ];
-
   return (
     <div
       style={{
@@ -184,7 +179,7 @@ export function ChatTab({
             flexWrap: "wrap",
           }}
         >
-          {SUGGESTIONS.map((s, i) => (
+          {suggestions.map((s, i) => (
             <button
               key={i}
               onClick={() => setInput(s)}

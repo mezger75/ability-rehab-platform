@@ -96,6 +96,13 @@ export default function PatientResults() {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
 
+  const [suggestions, setSuggestions] = useState<string[]>([
+    "Как улучшить мобильность?",
+    "Упражнения для восстановления",
+    "Когда ожидать результаты?",
+    "Что делать при боли?",
+  ]);
+
   // Scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -173,6 +180,11 @@ export default function PatientResults() {
           ...prev,
           { role: "assistant" as const, content: data.message },
         ]);
+
+        // Update suggestions if provided
+        if (data.suggestions && data.suggestions.length > 0) {
+          setSuggestions(data.suggestions);
+        }
       } else {
         setMessages((prev) => [
           ...prev,
@@ -820,6 +832,33 @@ export default function PatientResults() {
                 background: "white",
               }}
             >
+              {/* Suggestions */}
+              <div
+                style={{
+                  display: "flex",
+                  gap: 6,
+                  marginBottom: 10,
+                  flexWrap: "wrap",
+                }}
+              >
+                {suggestions.map((s, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setInputValue(s)}
+                    style={{
+                      fontSize: 12,
+                      background: "#eff6ff",
+                      color: "#1d4ed8",
+                      border: "none",
+                      padding: "5px 12px",
+                      borderRadius: 99,
+                      cursor: "pointer",
+                    }}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
               <div style={{ display: "flex", gap: 8 }}>
                 <input
                   type="text"

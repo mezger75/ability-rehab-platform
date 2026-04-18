@@ -51,6 +51,12 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
   >([]);
   const [input, setInput] = useState("");
   const [loadingGoals, setLoadingGoals] = useState(false);
+  const [suggestions, setSuggestions] = useState<string[]>([
+    "Сформулируй SMART-цель для мобильности",
+    "Цель по когнитивной реабилитации",
+    "Что приоритетнее для данного пациента?",
+    "Цель для восстановления самообслуживания",
+  ]);
   const chatEnd = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -158,6 +164,10 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
           ...prev,
           { role: "assistant" as const, content: data.message },
         ]);
+        // Update suggestions if provided
+        if (data.suggestions && data.suggestions.length > 0) {
+          setSuggestions(data.suggestions);
+        }
       } else {
         setMsgs((prev) => [
           ...prev,
@@ -560,6 +570,7 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
                     sendMessage={sendMessage}
                     loading={loadingGoals}
                     chatEnd={chatEnd as React.RefObject<HTMLDivElement>}
+                    suggestions={suggestions}
                   />
                 )}
               </div>
