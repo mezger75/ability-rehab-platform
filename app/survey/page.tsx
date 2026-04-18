@@ -147,7 +147,9 @@ export default function PatientQuestionnaire() {
 
         // Redirect to patient results after 2 seconds
         setTimeout(() => {
-          router.push("/patient-results");
+          router.push(
+            `/patient-results?name=${encodeURIComponent(name || "Пациент")}`
+          );
         }, 2000);
       }
     }, 280);
@@ -530,7 +532,11 @@ export default function PatientQuestionnaire() {
               }}
             >
               <button
-                onClick={() => router.push("/patient-results")}
+                onClick={() =>
+                  router.push(
+                    `/patient-results?name=${encodeURIComponent(name || "Пациент")}`
+                  )
+                }
                 style={{
                   width: "100%",
                   background: "#3b82f6",

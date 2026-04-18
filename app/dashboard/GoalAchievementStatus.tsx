@@ -117,8 +117,8 @@ export function GoalAchievementStatus({
                       fontSize: 11,
                       color: "#94a3b8",
                       overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
+                      whiteSpace: "normal",
+                      textAlign: "center",
                     }}
                   >
                     {g.text}
