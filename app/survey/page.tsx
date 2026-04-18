@@ -103,6 +103,7 @@ export default function PatientQuestionnaire() {
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [name, setName] = useState("");
   const [selected, setSelected] = useState<number | null>(null);
+  const [nameError, setNameError] = useState("");
 
   const progress = Math.round((step / QUESTIONS.length) * 100);
   const q = QUESTIONS[step];
@@ -154,6 +155,20 @@ export default function PatientQuestionnaire() {
 
   const handleBack = () => {
     router.push("/");
+  };
+
+  const handleStartSurvey = () => {
+    const trimmedName = name.trim();
+    if (!trimmedName) {
+      setNameError("Пожалуйста, введите ваше имя");
+      return;
+    }
+    if (trimmedName.length < 2) {
+      setNameError("Имя должно содержать минимум 2 символа");
+      return;
+    }
+    setNameError("");
+    setPhase("questions");
   };
 
   const s: Record<string, React.CSSProperties> = {
@@ -305,24 +320,50 @@ export default function PatientQuestionnaire() {
                 >
                   Ваше имя
                 </label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Введите имя"
-                  style={{
-                    width: "100%",
-                    border: "1px solid #e2e8f0",
-                    borderRadius: 10,
-                    padding: "10px 14px",
-                    fontSize: 15,
-                    boxSizing: "border-box",
-                    outline: "none",
-                  }}
-                />
+                <div style={{ position: "relative" }}>
+                  {nameError && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        bottom: "100%",
+                        left: 0,
+                        right: 0,
+                        marginBottom: 6,
+                        padding: "6px 10px",
+                        background: "#fef2f2",
+                        border: "1px solid #fecaca",
+                        borderRadius: 8,
+                        color: "#dc2626",
+                        fontSize: 12,
+                        zIndex: 10,
+                      }}
+                    >
+                      {nameError}
+                    </div>
+                  )}
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => {
+                      setName(e.target.value);
+                      if (nameError) setNameError("");
+                    }}
+                    placeholder="Введите имя"
+                    style={{
+                      width: "100%",
+                      border: `1px solid ${nameError ? "#ef4444" : "#e2e8f0"}`,
+                      borderRadius: 10,
+                      padding: "10px 14px",
+                      fontSize: 15,
+                      boxSizing: "border-box",
+                      outline: "none",
+                    }}
+                    required
+                  />
+                </div>
               </div>
               <button
-                onClick={() => setPhase("questions")}
+                onClick={handleStartSurvey}
                 style={{
                   width: "100%",
                   background: "#2563eb",
