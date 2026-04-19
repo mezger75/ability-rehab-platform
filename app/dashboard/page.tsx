@@ -175,6 +175,10 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
           };
           setGoals((prev) => [...prev, newGoal]);
         });
+        // Update suggestions if provided
+        if (data.suggestions && data.suggestions.length > 0) {
+          setSuggestions(data.suggestions);
+        }
       } else if (data.message) {
         setMsgs((prev) => [
           ...prev,

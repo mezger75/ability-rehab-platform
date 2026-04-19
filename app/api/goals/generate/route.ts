@@ -421,6 +421,35 @@ export async function POST(request: NextRequest) {
       if (message.includes("---SUGGESTIONS---")) {
         message = message.split("---SUGGESTIONS---")[0].trim();
       }
+      // Извлекаем suggestions из исходного текста
+      let suggestions: string[] = [];
+      if (text.includes("---SUGGESTIONS---")) {
+        const parts = text.split("---SUGGESTIONS---");
+        const suggestionsText = parts[1]?.trim();
+        if (suggestionsText) {
+          suggestions = suggestionsText
+            .split("\n")
+            .map((s: string) => s.trim())
+            .filter((s: string) => s.length > 0)
+            .slice(0, 4);
+        }
+      }
+      if (suggestions.length === 0) {
+        suggestions =
+          role === "doctor"
+            ? [
+                "Сформулируй SMART-цель",
+                "Какие противопоказания?",
+                "Критерии оценки прогресса",
+                "Альтернативные подходы",
+              ]
+            : [
+                "Какие упражнения делать?",
+                "Когда ожидать улучшения?",
+                "Что делать при боли?",
+                "Как часто заниматься?",
+              ];
+      }
       if (patient?.name) {
         const { createClient } = await import("@supabase/supabase-js");
         const supabase = createClient(
@@ -442,7 +471,7 @@ export async function POST(request: NextRequest) {
           });
         }
       }
-      return NextResponse.json({ goals, message });
+      return NextResponse.json({ goals, message, suggestions });
     }
     // Старый формат — чистый JSON массив
     const clean = text.replace(/```json|```/g, "").trim();
