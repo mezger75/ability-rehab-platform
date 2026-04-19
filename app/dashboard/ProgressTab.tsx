@@ -49,9 +49,9 @@ export function ProgressTab() {
                   key={k}
                   id={`grad_${k}`}
                   x1="0"
-                  y1="0"
+                  y1="1"
                   x2="0"
-                  y2="1"
+                  y2="0"
                 >
                   <stop offset="5%" stopColor={c} stopOpacity={0.18} />
                   <stop offset="95%" stopColor={c} stopOpacity={0} />
@@ -85,7 +85,7 @@ export function ProgressTab() {
                 type="monotone"
                 dataKey={key}
                 stroke={color}
-                fill={`url(#grad_${key})`}
+                fill="none"
                 strokeWidth={2.5}
                 dot={{ r: 3, fill: color }}
               />
