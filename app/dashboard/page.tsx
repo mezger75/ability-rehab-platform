@@ -148,14 +148,20 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
       const data = await res.json();
 
       if (data.goals && data.goals.length > 0) {
-        const reply =
-          data.message ||
-          `Сформулированы SMART-цели:\n\n${data.goals
+        let reply = data.message || "";
+        // Очищаем от SUGGESTIONS блока если он попал в message
+        if (reply.includes("---SUGGESTIONS---")) {
+          reply = reply.split("---SUGGESTIONS---")[0].trim();
+        }
+        // Если message пустой, формируем дефолтный
+        if (!reply) {
+          reply = `Сформулированы SMART-цели:\n\n${data.goals
             .map(
               (g: GeneratedGoal, i: number) =>
                 `${i + 1}. ${g.text}\n\n   S: ${g.specific}\n   M: ${g.measurable}\n   A: ${g.achievable}\n   R: ${g.relevant}\n   T: ${g.timeBound}`
             )
             .join("\n\n")}`;
+        }
         setMsgs((prev) => [
           ...prev,
           { role: "assistant" as const, content: reply },
