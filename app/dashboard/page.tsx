@@ -148,7 +148,14 @@ function DoctorDashboard({ onBack, submissions }: DoctorDashboardProps) {
       const data = await res.json();
 
       if (data.goals && data.goals.length > 0) {
-        const reply = `Сформулированы SMART-цели:\n\n${data.goals.map((g: GeneratedGoal, i: number) => `${i + 1}. ${g.text}\n   Домен: ${g.domain}\n   Срок: ${g.timeBound}`).join("\n\n")}`;
+        const reply =
+          data.message ||
+          `Сформулированы SMART-цели:\n\n${data.goals
+            .map(
+              (g: GeneratedGoal, i: number) =>
+                `${i + 1}. ${g.text}\n\n   S: ${g.specific}\n   M: ${g.measurable}\n   A: ${g.achievable}\n   R: ${g.relevant}\n   T: ${g.timeBound}`
+            )
+            .join("\n\n")}`;
         setMsgs((prev) => [
           ...prev,
           { role: "assistant" as const, content: reply },
