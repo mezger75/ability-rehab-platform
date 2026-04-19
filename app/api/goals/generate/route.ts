@@ -370,7 +370,14 @@ export async function POST(request: NextRequest) {
     : "";
 
   const systemMessage = patientContext
-    ? `${SYSTEM_PROMPT}\n\n${patientContext}\n\nВАЖНО: Когда формулируешь SMART-цель — возвращай её ТОЛЬКО в формате JSON массива без дополнительного текста:\n[{"text":"...","domain":"...","specific":"...","measurable":"...","achievable":"...","relevant":"...","timeBound":"..."}]\nЕсли это обычный диалог без формулировки цели — отвечай обычным текстом.`
+    ? `${SYSTEM_PROMPT}\n\n${patientContext}\n\nВАЖНО: Когда формулируешь SMART-цель:
+1. Сначала дай развёрнутый ответ пациенту с полным разбором по критериям S/M/A/R/T как описано в промпте
+2. В самом конце ответа добавь JSON блок в таком формате:
+---GOALS_JSON---
+[{"text":"...","domain":"...","specific":"...","measurable":"...","achievable":"...","relevant":"...","timeBound":"..."}]
+---GOALS_JSON---
+Не добавляй markdown форматирование внутри блока GOALS_JSON.
+Если это обычный диалог без формулировки цели — отвечай обычным текстом без JSON.`
     : SYSTEM_PROMPT;
 
   const response = await fetch(
@@ -402,13 +409,18 @@ export async function POST(request: NextRequest) {
 
   const text = data.choices[0].message.content;
 
-  // Попытка распарсить как JSON (для SMART-целей)
+  // Попытка распарсить GOALS_JSON блок
   try {
-    const clean = text.replace(/```json|```/g, "").trim();
-    if (clean.startsWith("[")) {
-      const goals = JSON.parse(clean);
-
-      // Сохраняем цели в Supabase
+    const goalsMatch = text.match(/---GOALS_JSON---([\s\S]*?)---GOALS_JSON---/);
+    if (goalsMatch) {
+      const jsonStr = goalsMatch[1].replace(/```json|```/g, "").trim();
+      const goals = JSON.parse(jsonStr);
+      let message = text
+        .replace(/---GOALS_JSON---[\s\S]*?---GOALS_JSON---/, "")
+        .trim();
+      if (message.includes("---SUGGESTIONS---")) {
+        message = message.split("---SUGGESTIONS---")[0].trim();
+      }
       if (patient?.name) {
         const { createClient } = await import("@supabase/supabase-js");
         const supabase = createClient(
@@ -430,12 +442,39 @@ export async function POST(request: NextRequest) {
           });
         }
       }
-
+      return NextResponse.json({ goals, message });
+    }
+    // Старый формат — чистый JSON массив
+    const clean = text.replace(/```json|```/g, "").trim();
+    if (clean.startsWith("[")) {
+      const goals = JSON.parse(clean);
+      if (patient?.name) {
+        const { createClient } = await import("@supabase/supabase-js");
+        const supabase = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        );
+        for (const goal of goals) {
+          await supabase.from("goals").insert({
+            patient_name: patient.name,
+            domain: goal.domain,
+            text: goal.text,
+            specific: goal.specific,
+            measurable: goal.measurable,
+            achievable: goal.achievable,
+            relevant: goal.relevant,
+            time_bound: goal.timeBound,
+            gas_score: 0,
+            color: "#3b82f6",
+          });
+        }
+      }
       return NextResponse.json({ goals });
     }
   } catch {
     // Не JSON — обычный ответ
   }
+
   // Извлечение подсказок из ответа
   let message = text;
   let suggestions: string[] = [];
