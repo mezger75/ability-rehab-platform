@@ -1,6 +1,7 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 
 // ─── Patient Results Page ──────────────────────────────────────────────────────
@@ -88,15 +89,9 @@ interface GeneratedGoal {
 
 export default function PatientResults() {
   const router = useRouter();
-  const getPatientName = () => {
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      return params.get("name") || "Пациент";
-    }
-    return "Пациент";
-  };
+  const searchParams = useSearchParams();
+  const patientName = searchParams.get("name") || "Пациент";
 
-  const [patientName] = useState(getPatientName);
   const [messages, setMessages] = useState<ChatMessage[]>(INITIAL_MESSAGES);
   const [inputValue, setInputValue] = useState("");
   const [goals, setGoals] = useState<Goal[]>(PATIENT_GOALS);
@@ -156,12 +151,14 @@ export default function PatientResults() {
       const data = await res.json();
 
       if (data.goals && data.goals.length > 0) {
-        const reply = `Сформулированы SMART-цели:\n\n${data.goals
-          .map(
-            (g: GeneratedGoal, i: number) =>
-              `${i + 1}. ${g.text}\n   Домен: ${g.domain}\n   Срок: ${g.timeBound}`
-          )
-          .join("\n\n")}`;
+        const reply =
+          data.message ||
+          `Сформулированы SMART-цели:\n\n${data.goals
+            .map(
+              (g: GeneratedGoal, i: number) =>
+                `${i + 1}. ${g.text}\n\n   S: ${g.specific}\n   M: ${g.measurable}\n   A: ${g.achievable}\n   R: ${g.relevant}\n   T: ${g.timeBound}`
+            )
+            .join("\n\n")}`;
         setMessages((prev) => [
           ...prev,
           { role: "assistant" as const, content: reply },
@@ -295,7 +292,7 @@ export default function PatientResults() {
               fontSize: 12,
               color: "#64748b",
               lineHeight: 1.4,
-              maxWidth: 120,
+              width: "100%",
               textAlign: "center",
               whiteSpace: "normal",
               overflow: "hidden",
