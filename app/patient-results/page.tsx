@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
@@ -87,7 +87,7 @@ interface GeneratedGoal {
   timeBound: string;
 }
 
-export default function PatientResults() {
+function PatientResultsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const patientName = searchParams.get("name") || "Пациент";
@@ -1088,5 +1088,13 @@ export default function PatientResults() {
         }
       `}</style>
     </div>
+  );
+}
+
+export default function PatientResults() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <PatientResultsContent />
+    </Suspense>
   );
 }
