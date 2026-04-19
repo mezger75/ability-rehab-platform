@@ -132,7 +132,22 @@ export function ChatTab({
                 }}
                 dangerouslySetInnerHTML={{
                   __html: m.content
-                    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+                    .replace(
+                      /### (.*?)(\n|$)/g,
+                      "<strong style='font-weight: 600;'>$1</strong><br/>"
+                    )
+                    .replace(
+                      /## (.*?)(\n|$)/g,
+                      "<strong style='font-weight: 600;'>$1</strong><br/>"
+                    )
+                    .replace(
+                      /# (.*?)(\n|$)/g,
+                      "<strong style='font-weight: 600;'>$1</strong><br/>"
+                    )
+                    .replace(
+                      /\*\*(.*?)\*\*/g,
+                      "<strong style='font-weight: 600;'>$1</strong>"
+                    )
                     .replace(/\*(.*?)\*/g, "<em>$1</em>")
                     .replace(/\n/g, "<br/>"),
                 }}
